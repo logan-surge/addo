@@ -84,7 +84,17 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
 .groups::-webkit-scrollbar{display:none}
 .groups button{flex:0 0 auto;padding:6px 11px;border-radius:999px;border:1.5px solid var(--line);font-size:13.5px;font-weight:600;white-space:nowrap}
 .groups button[aria-pressed="true"]{background:var(--thicket);border-color:var(--thicket);color:var(--on-thicket)}
-.progress{margin:4px 2px 0;font-size:14px;color:var(--muted)}
+.list-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:2px 2px 0}
+.progress{margin:0;font-size:14px;color:var(--muted)}
+.sort{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted);flex:0 0 auto}
+.sort select{font:inherit;font-size:15px;font-weight:600;color:var(--ink);background-color:var(--surface);border:1.5px solid var(--line);
+  border-radius:10px;padding:7px 30px 7px 11px;-webkit-appearance:none;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 16px) 55%,calc(100% - 11px) 55%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+.sort select:focus{border-color:var(--ochre);outline:none}
+.letter{margin-top:18px}
+.letter .tier-head{border-bottom-width:1px;border-color:var(--line)}
+.letter .tier-head h2{font-size:22px;color:var(--muted)}
 
 .ele{background:var(--thicket);color:var(--on-thicket);border-radius:20px;padding:16px;margin:14px 0 6px}
 .ele-row{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px}
@@ -243,6 +253,16 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
         <button data-group="b" aria-pressed="false">Birds</button>
         <button data-group="r" aria-pressed="false">Reptiles &amp; bugs</button>
       </div>
+    </div>
+    <div class="list-tools">
+      <p class="progress" id="progress"></p>
+      <label class="sort"><span>Sort</span>
+        <select id="sort">
+          <option value="tiers">Tiers</option>
+          <option value="points">Most points</option>
+          <option value="az">A to Z</option>
+        </select>
+      </label>
     </div>
     <div id="spot-list"></div>
   </section>
@@ -712,7 +732,7 @@ function deal(kind){
 function fresh(){
   return {name:'', introDone:false, sightings:{}, quests:{}, sticks:[],
     cards:{classic:deal('classic'), challenge:deal('challenge')},
-    seen:{sets:{}, bingo:{classic:0, challenge:0}}, theme:'auto', bingoView:'classic', offlineToasted:false};
+    seen:{sets:{}, bingo:{classic:0, challenge:0}}, theme:'auto', bingoView:'classic', sort:'tiers', offlineToasted:false};
 }
 function validCard(c){ return c && Array.isArray(c.ids) && c.ids.length===16 && c.ids.every(id=>SQ[id]) && c.marks && typeof c.marks==='object'; }
 function loadState(){
@@ -823,15 +843,31 @@ function renderSpot(){
   const match = sp => G.test(sp) && (!q || sp.name.toLowerCase().includes(q));
   const inGroup = SPECIES.map(a => SP[a[0]]).filter(G.test);
   const count = inGroup.filter(sp => S.sightings[sp.id]).length;
-  let html = `<p class="progress">${count} of ${inGroup.length} ${G.noun[inGroup.length === 1 ? 0 : 1]} spotted</p>`;
+  $('#progress').textContent = `${count} of ${inGroup.length} ${G.noun[inGroup.length === 1 ? 0 : 1]} spotted`;
+  let html = '';
   let shown = 0;
   if (match(SP.elephant)) { html += elephantPanel(); shown++; }
-  TIERS.forEach(t => {
-    const list = SPECIES.map(a => SP[a[0]]).filter(sp => sp.id !== 'elephant' && t.test(sp.base) && match(sp));
-    if (!list.length) return;
-    shown += list.length;
-    html += `<section class="tier" style="--tier:${t.color}"><div class="tier-head"><h2 class="disp">${t.name}</h2><span class="band">${t.band}</span></div><ul class="list">${list.map(rowHTML).join('')}</ul></section>`;
-  });
+  const pool = SPECIES.map(a => SP[a[0]]).filter(sp => sp.id !== 'elephant' && match(sp));
+  const byName = (a, b) => a.name.localeCompare(b.name, 'en');
+  shown += pool.length;
+  if (S.sort === 'az') {
+    const letters = [];
+    pool.slice().sort(byName).forEach(sp => {
+      const L = sp.name.charAt(0).toUpperCase();
+      const last = letters[letters.length - 1];
+      if (last && last.L === L) last.list.push(sp); else letters.push({L, list:[sp]});
+    });
+    html += letters.map(({L, list}) =>
+      `<section class="tier letter"><div class="tier-head"><h2 class="disp">${L}</h2></div><ul class="list">${list.map(rowHTML).join('')}</ul></section>`).join('');
+  } else {
+    const desc = S.sort === 'points';
+    (desc ? TIERS.slice().reverse() : TIERS).forEach(t => {
+      const list = pool.filter(sp => t.test(sp.base))
+        .sort((a, b) => (desc ? b.base - a.base : a.base - b.base) || byName(a, b));
+      if (!list.length) return;
+      html += `<section class="tier" style="--tier:${t.color}"><div class="tier-head"><h2 class="disp">${t.name}</h2><span class="band">${t.band}</span></div><ul class="list">${list.map(rowHTML).join('')}</ul></section>`;
+    });
+  }
   if (!shown) html += G.id === 'all'
     ? `<p class="empty">Nothing on the list matches “${esc(q)}”. Try part of the name, like “fox” or “bok”.</p>`
     : `<p class="empty">No ${G.noun[1]} match “${esc(q)}”. Switch to All to search every animal.</p>`;
@@ -1037,12 +1073,15 @@ document.addEventListener('click', e => {
 
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
 $('#search').addEventListener('input', renderSpot);
+$('#sort').addEventListener('change', e => { S.sort = e.target.value; save(); renderSpot(); window.scrollTo(0, 0); });
 $('#name-input').addEventListener('input', e => { S.name = e.target.value.trim(); save(); renderHeader(totals()); renderScore(totals()); });
 $('#intro-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.querySelector('[data-act="intro-go"]').click(); } });
 
 /* ---------- Static bits ---------- */
 $('#rules-sets').innerHTML = SETS.map(st => `<li><strong>${st.name}</strong> (+${fmt(st.bonus)}): ${st.note}.</li>`).join('');
 $('#name-input').value = S.name || '';
+if (!['tiers','points','az'].includes(S.sort)) S.sort = 'tiers';
+$('#sort').value = S.sort;
 
 /* ---------- Offline ---------- */
 function setOffline(text, cls){ const el = $('#offline-status'); el.textContent = text; el.className = 'status ' + (cls || ''); }

@@ -1,5 +1,5 @@
 // Addo Safari Bingo: caches the whole game so it runs with no signal.
-const CACHE = 'addo-bingo-v2';
+const CACHE = 'addo-bingo-v3';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
