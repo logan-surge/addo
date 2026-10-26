@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#21402A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Addo Bingo">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<title>Addo Safari Bingo</title>
+<style>
+:root{
+  --bg:#D9D4BC; --surface:#E8E3CE; --surface-2:#CBC5A9; --ink:#1C2B1F; --muted:#565B4A;
+  --line:rgba(28,43,31,.17); --thicket:#21402A; --on-thicket:#ECE6CF; --spek:#4F7A31;
+  --ochre:#E2A11C; --ochre-ink:#7A5200; --danger:#9E2B1E;
+  --display:"Avenir Next Condensed","Roboto Condensed","sans-serif-condensed","Arial Narrow",system-ui,sans-serif;
+  --body:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F130F; --surface:#171D17; --surface-2:#222B22; --ink:#E7E0C4; --muted:#A3A28A;
+    --line:rgba(231,224,196,.15); --thicket:#2A4930; --on-thicket:#ECE6CF; --spek:#86B562;
+    --ochre:#E8AD40; --ochre-ink:#E8AD40; --danger:#E5826F; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F130F; --surface:#171D17; --surface-2:#222B22; --ink:#E7E0C4; --muted:#A3A28A;
+  --line:rgba(231,224,196,.15); --thicket:#2A4930; --on-thicket:#ECE6CF; --spek:#86B562;
+  --ochre:#E8AD40; --ochre-ink:#E8AD40; --danger:#E5826F; color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.45;
+  -webkit-tap-highlight-color:transparent;overscroll-behavior-y:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-appearance:none;appearance:none;text-align:inherit}
+input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ochre);outline-offset:2px}
+[hidden]{display:none!important}
+.disp{font-family:var(--display);font-stretch:condensed;font-weight:800;letter-spacing:.005em}
+.num{font-variant-numeric:tabular-nums}
+
+/* Header */
+.top{position:sticky;top:0;z-index:20;background:var(--thicket);color:var(--on-thicket);
+  padding:calc(env(safe-area-inset-top,0px) + 10px) 18px 12px;}
+.top-inner{max-width:640px;margin:0 auto;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.brand{display:flex;flex-direction:column;line-height:1;min-width:0}
+.brand-park{font-size:32px;line-height:.95}
+.brand-sub{font-size:13px;opacity:.78;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.total{text-align:right;line-height:.9}
+.total-n{font-size:44px;color:var(--ochre);display:inline-block}
+.total-l{display:block;font-size:12px;opacity:.78;margin-top:4px}
+.bump{animation:bump .35s ease-out}
+@keyframes bump{40%{transform:scale(1.14)}}
+
+main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-inset-bottom,0px))}
+
+/* Bottom tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs-inner{max-width:640px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr)}
+.tab{position:relative;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 8px;font-size:12px;font-weight:600;color:var(--muted)}
+.tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tab[aria-current="page"]{color:var(--ink)}
+.tab[aria-current="page"]::before{content:"";position:absolute;top:-1px;left:28%;right:28%;height:3px;border-radius:0 0 3px 3px;background:var(--ochre)}
+
+/* Spot tab */
+.intro{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:16px}
+.intro h2{font-size:26px;margin:0 0 4px}
+.intro p{margin:0 0 12px;color:var(--muted);font-size:15px}
+.intro-actions{display:flex;gap:8px;margin-top:10px}
+.field{display:block}
+.field span{display:block;font-size:14px;font-weight:600;margin-bottom:6px}
+.input{width:100%;font-size:16px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;outline-offset:0}
+.input:focus{border-color:var(--ochre);outline:none}
+.intro .input{background:var(--bg)}
+.search{position:sticky;top:var(--header-h,82px);z-index:10;background:var(--bg);padding:2px 0 8px;margin:-2px 0 0}
+.groups{display:flex;gap:6px;margin-top:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.groups::-webkit-scrollbar{display:none}
+.groups button{flex:0 0 auto;padding:6px 11px;border-radius:999px;border:1.5px solid var(--line);font-size:13.5px;font-weight:600;white-space:nowrap}
+.groups button[aria-pressed="true"]{background:var(--thicket);border-color:var(--thicket);color:var(--on-thicket)}
+.progress{margin:4px 2px 0;font-size:14px;color:var(--muted)}
+
+.ele{background:var(--thicket);color:var(--on-thicket);border-radius:20px;padding:16px;margin:14px 0 6px}
+.ele-row{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px}
+.ele-name{display:block;font-size:28px;line-height:1}
+.ele-sub{display:block;font-size:14px;opacity:.8;margin-top:5px}
+.ele .pts{color:var(--ochre)}
+.quests{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.chip{display:flex;justify-content:space-between;align-items:center;gap:6px;min-height:52px;padding:9px 11px;border-radius:11px;
+  border:1.5px solid rgba(236,230,207,.32);font-size:14px;line-height:1.2;font-weight:500}
+.chip b{font-family:var(--display);font-stretch:condensed;font-size:18px;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--ochre);border-color:var(--ochre);color:#271B00}
+
+.tier{margin-top:24px}
+.tier-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:3px solid var(--tier,var(--ink));padding-bottom:5px}
+.tier-head h2{font-size:26px;margin:0;line-height:1}
+.band{font-size:13px;color:var(--muted)}
+.list{list-style:none;margin:0;padding:0}
+.list li+li{border-top:1px solid var(--line)}
+.row{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:11px 2px;min-height:58px}
+.row-main{min-width:0}
+.row-name{display:block;font-size:17px;font-weight:600;line-height:1.25}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px;font-size:12px;color:var(--muted);align-items:center}
+.got-meta{color:var(--spek);font-weight:600;font-size:13px}
+.meter{display:inline-flex;align-items:center;gap:3px}
+.ml{margin-right:3px}
+.meter i{display:block;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.22}
+.meter.h i{border-radius:1px;transform:rotate(45deg);width:5.5px;height:5.5px}
+.meter i.on{opacity:1}
+.meter.h i.on{background:var(--ochre-ink)}
+.pts{font-family:var(--display);font-stretch:condensed;font-weight:800;font-size:25px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.got .pts{background:var(--thicket);color:var(--ochre);padding:5px 11px 4px;border-radius:999px;box-shadow:0 0 0 2px var(--ochre);transform:rotate(-6deg)}
+.ele .got .pts{background:var(--ochre);color:#271B00;box-shadow:0 0 0 2px var(--on-thicket)}
+.stamp-in{animation:stamp .34s cubic-bezier(.2,1.5,.45,1)}
+@keyframes stamp{from{transform:scale(1.9) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(-6deg);opacity:1}}
+.empty{color:var(--muted);margin:24px 2px}
+
+/* Buttons */
+.primary{display:block;width:100%;text-align:center;background:var(--thicket);color:var(--on-thicket);border-radius:14px;padding:15px 16px;font-weight:700;font-size:17px}
+.secondary{display:block;width:100%;text-align:center;border:1.5px solid var(--line);border-radius:14px;padding:13px 16px;font-weight:600}
+.link-btn{display:block;width:100%;text-align:center;padding:13px;font-weight:600;color:var(--muted)}
+.danger{color:var(--danger)}
+.intro-actions .primary{flex:1}
+.intro-actions .link-btn{width:auto;padding:13px 14px}
+
+/* Bingo */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--surface-2);border-radius:13px;padding:4px;gap:4px}
+.seg button{padding:10px 8px;border-radius:10px;font-weight:600;text-align:center;font-size:15px}
+.seg button[aria-pressed="true"]{background:var(--thicket);color:var(--on-thicket)}
+.bingo-status{font-size:30px;margin:18px 0 2px;line-height:1.05}
+.bingo-help{font-size:14px;color:var(--muted);margin:0}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 10px}
+.sq{position:relative;aspect-ratio:1/1;border-radius:9px;background:var(--surface);border:1px solid var(--line);
+  font-size:12.5px;line-height:1.18;font-weight:600;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;overflow:hidden;-webkit-hyphens:auto;hyphens:auto;overflow-wrap:anywhere}
+.sq small{display:block;font-size:10px;font-weight:700;margin-top:3px;opacity:.75}
+.sq.done{background:var(--thicket);color:var(--on-thicket);border-color:var(--thicket)}
+.sq-t{position:relative;z-index:1}
+.sq.done::after{content:"";position:absolute;inset:7%;border:3px solid var(--ochre);border-radius:50%;transform:rotate(-12deg);opacity:.55;pointer-events:none}
+.sq.inline{box-shadow:0 0 0 3px var(--ochre)}
+.sq.stamp-sq::after{animation:ring .34s cubic-bezier(.2,1.5,.45,1)}
+@keyframes ring{from{transform:scale(1.7) rotate(-30deg);opacity:0}to{transform:scale(1) rotate(-12deg);opacity:.55}}
+.note{font-size:13px;color:var(--muted);margin:4px 2px 0;text-align:center}
+
+/* Score */
+.score-hero{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:3px solid var(--ink);padding-bottom:6px;margin-top:6px}
+.score-hero h2{font-size:28px;margin:0;line-height:1}
+.score-hero .disp{font-size:44px;line-height:1}
+.rows{list-style:none;margin:0 0 6px;padding:0}
+.rows li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line)}
+.rows .label small{display:block;font-size:13px;color:var(--muted)}
+.rows .v{font-family:var(--display);font-stretch:condensed;font-weight:800;font-size:22px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rows .v.off{color:var(--muted);font-weight:600}
+.sec-h{font-size:24px;margin:28px 0 4px;line-height:1}
+.sec-p{margin:0 0 10px;color:var(--muted);font-size:14px}
+.stick{display:flex;gap:8px;margin-top:10px}
+.stick .secondary{flex:1}
+.stick .link-btn{width:auto;padding:13px 12px}
+.prog{display:inline-block;font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap}
+.done-mark{color:var(--spek)}
+.settings{display:grid;gap:16px;margin-top:10px}
+.log-t{font-size:13px;color:var(--muted);display:block}
+
+/* Rules */
+.prose h2{font-size:26px;margin:28px 0 6px;line-height:1}
+.prose h2:first-child{margin-top:8px}
+.prose p,.prose li{font-size:16px;line-height:1.55;max-width:62ch}
+.prose p{margin:0 0 10px}
+.prose ul{margin:0 0 10px;padding-left:20px}
+.prose li{margin:3px 0}
+.example{background:var(--surface);border-left:4px solid var(--ochre);padding:10px 12px;border-radius:0 10px 10px 0;font-variant-numeric:tabular-nums}
+.status{font-weight:600}
+.status.ok{color:var(--spek)}
+.status.warn{color:var(--danger)}
+
+/* Sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.backdrop{position:absolute;inset:0;background:rgba(8,14,9,.55);animation:fade .2s ease-out}
+.sheet{position:relative;width:100%;max-width:640px;max-height:92vh;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;
+  padding:10px 18px calc(16px + env(safe-area-inset-bottom,0px));animation:up .24s cubic-bezier(.2,.9,.3,1)}
+.grabber{width:42px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 14px}
+.sheet h3{font-size:34px;margin:0;line-height:1}
+.formula{color:var(--muted);font-size:14px;margin:6px 0 16px;font-variant-numeric:tabular-nums}
+.mods{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mod{display:flex;flex-direction:column;justify-content:space-between;gap:4px;min-height:70px;padding:11px 12px;border-radius:13px;border:1.5px solid var(--line);font-size:14px;font-weight:600;line-height:1.2}
+.mod b{font-family:var(--display);font-stretch:condensed;font-size:22px;font-weight:800}
+.mod[aria-pressed="true"]{background:var(--thicket);color:var(--on-thicket);border-color:var(--thicket)}
+.mod[aria-pressed="true"] b{color:var(--ochre)}
+.sheet-total{display:flex;justify-content:space-between;align-items:baseline;margin:18px 0 12px;border-top:3px solid var(--ink);padding-top:8px}
+.sheet-total span{font-weight:600}
+.sheet-total strong{font-size:46px;line-height:1}
+@keyframes up{from{transform:translateY(100%)}}
+@keyframes fade{from{opacity:0}}
+
+/* Toast */
+.toast{position:fixed;left:50%;top:calc(var(--header-h,82px) + 10px);transform:translate(-50%,-10px);z-index:80;width:max-content;
+  background:var(--thicket);color:var(--on-thicket);box-shadow:0 0 0 2px var(--ochre),0 8px 24px rgba(0,0,0,.25);padding:12px 16px;border-radius:13px;font-weight:600;font-size:15px;max-width:min(90vw,520px);
+  opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <span class="brand-park disp">Addo</span>
+      <span class="brand-sub" id="brand-sub">Safari Bingo</span>
+    </div>
+    <div class="total">
+      <span class="total-n disp num" id="total">0</span>
+      <span class="total-l">points</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- SPOT -->
+  <section class="panel" id="tab-spot" aria-label="Spot animals">
+    <div class="intro" id="intro" hidden>
+      <h2 class="disp">Who’s spotting?</h2>
+      <p>Tap any animal you see to log it. Rare animals and crowd favourites score big, and each one counts once.</p>
+      <label class="field"><span>Your name</span>
+        <input class="input" id="intro-name" autocomplete="nickname" maxlength="24" placeholder="e.g. Logan"></label>
+      <div class="intro-actions">
+        <button class="primary" data-act="intro-go">Start spotting</button>
+        <button class="link-btn" data-act="intro-skip">Skip</button>
+      </div>
+    </div>
+    <div class="search">
+      <input class="input" id="search" type="search" placeholder="Find an animal" aria-label="Find an animal" autocomplete="off">
+      <div class="groups" role="group" aria-label="Show">
+        <button data-group="all" aria-pressed="true">All</button>
+        <button data-group="m" aria-pressed="false">Mammals</button>
+        <button data-group="b" aria-pressed="false">Birds</button>
+        <button data-group="r" aria-pressed="false">Reptiles &amp; bugs</button>
+      </div>
+    </div>
+    <div id="spot-list"></div>
+  </section>
+
+  <!-- BINGO -->
+  <section class="panel" id="tab-bingo" aria-label="Bingo" hidden>
+    <div class="seg" role="group" aria-label="Card">
+      <button data-view="classic" aria-pressed="true">Classic</button>
+      <button data-view="challenge" aria-pressed="false">Challenge</button>
+    </div>
+    <div id="bingo-body"></div>
+  </section>
+
+  <!-- SCORE -->
+  <section class="panel" id="tab-score" aria-label="Score" hidden>
+    <div id="score-body"></div>
+
+    <h2 class="sec-h disp">Stick-o-saurus</h2>
+    <p class="sec-p">Called a rock, log or bush an animal, and the car agrees? That’s 10 points off.</p>
+    <div class="stick">
+      <button class="secondary" data-act="stick">Add a Stick-o-saurus (−10)</button>
+      <button class="link-btn" data-act="unstick" id="unstick">Undo</button>
+    </div>
+
+    <div id="log-body"></div>
+
+    <h2 class="sec-h disp">Settings</h2>
+    <div class="settings">
+      <label class="field"><span>Your name</span>
+        <input class="input" id="name-input" autocomplete="nickname" maxlength="24" placeholder="e.g. Logan"></label>
+      <div>
+        <span class="field"><span>Screen</span></span>
+        <div class="seg" role="group" aria-label="Screen theme">
+          <button data-theme-set="auto">Match phone</button>
+          <button data-theme-set="light">Day</button>
+          <button data-theme-set="dark">Night drive</button>
+        </div>
+      </div>
+      <button class="link-btn danger" data-act="reset">Reset everything on this phone</button>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section class="panel prose" id="tab-rules" aria-label="Rules" hidden>
+    <h2 class="disp">How animals score</h2>
+    <p>Every animal has a rarity from 1 to 6 (how likely you are to see it at Addo) and a hype score from 1 to 5 (how loud the car gets). Points are 5 × rarity² × hype, so rare animals climb fast.</p>
+    <p class="example">Lion: rarity 4, hype 5. 5 × 4² × 5 = 400 points.</p>
+    <p>Each animal scores once. If you see it again doing something better, tap it and update the sighting.</p>
+    <p>The list covers the mammals, birds and reptiles on SANParks’ Addo checklists, minus the marine species. Small things that are hard to tell apart, like bats, geckos and mice, share one entry each. Rarity scores are best guesses for a visit to the main game area, and some may live mainly in other sections of the park.</p>
+
+    <h2 class="disp">Multipliers</h2>
+    <p>Tick these when you log a sighting. They stack.</p>
+    <ul>
+      <li>I called it first: ×1.5</li>
+      <li>With a baby: ×2</li>
+      <li>On a night drive: ×2</li>
+      <li>Hunt, kill or fight: ×3</li>
+    </ul>
+    <p class="example">A lion on a kill, on a night drive, that you called first: 400 × 1.5 × 2 × 3 = 3,600.</p>
+
+    <h2 class="disp">Elephant moments</h2>
+    <p>Addo has hundreds of elephants, so the sighting itself is only 25. The moments are one-off bonuses: tick each the first time it happens.</p>
+
+    <h2 class="disp">Sets</h2>
+    <ul id="rules-sets"></ul>
+
+    <h2 class="disp">Bingo</h2>
+    <p>You get a Classic card and a Challenge card, and every phone deals its own. Animal and elephant squares tick themselves when you log them. Tap any other square when it happens.</p>
+    <ul>
+      <li>One line (row, column or diagonal): 100</li>
+      <li>Two lines: 250</li>
+      <li>Full Classic card: 1,000 bonus</li>
+      <li>Full Challenge card: 2,500 bonus</li>
+    </ul>
+
+    <h2 class="disp">House rules</h2>
+    <p>Everyone in the car can log the same animal, but only whoever genuinely saw it first takes the ×1.5. A Stick-o-saurus costs 10 points, and the car votes on it. Disputes go to the driver.</p>
+
+    <h2 class="disp">Using it with no signal</h2>
+    <p class="status" id="offline-status">Checking offline setup…</p>
+    <p><strong>iPhone:</strong> open the link in Safari, tap Share, then Add to Home Screen.<br>
+       <strong>Android:</strong> open it in Chrome, tap the ⋮ menu, then Add to home screen or Install app.</p>
+    <p>Do this while you still have signal, then always play from the home screen icon. On iPhone the icon keeps its own score, separate from Safari.</p>
+    <p>Your score lives only on this phone, so clearing browser data or deleting the icon wipes it.</p>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Sections">
+  <div class="tabs-inner">
+    <button class="tab" data-tab="spot" aria-current="page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.5" cy="15.5" r="3.8"/><circle cx="17.5" cy="15.5" r="3.8"/><path d="M10.3 15.5h3.4M3.6 12.4 6 5.5h3.2l1.1 7M20.4 12.4 18 5.5h-3.2l-1.1 7"/></svg>
+      Spot</button>
+    <button class="tab" data-tab="bingo">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="2.5"/><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17"/></svg>
+      Bingo</button>
+    <button class="tab" data-tab="score">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20.5h18M5 20.5v-7h4.3v7M9.8 20.5V7h4.4v13.5M14.7 20.5v-9.5H19v9.5"/></svg>
+      Score</button>
+    <button class="tab" data-tab="rules">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 5.5c3-1.2 5.8-1 8.5 1 2.7-2 5.5-2.2 8.5-1v13c-3-1.2-5.8-1-8.5 1-2.7-2-5.5-2.2-8.5-1z"/><path d="M12 6.5v13"/></svg>
+      Rules</button>
+  </div>
+</nav>
+
+<div class="sheet-wrap" id="sheet" hidden>
+  <div class="backdrop" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="grabber" aria-hidden="true"></div>
+    <h3 class="disp" id="sheet-title"></h3>
+    <p class="formula" id="sheet-formula"></p>
+    <div class="mods" id="sheet-mods"></div>
+    <div class="sheet-total"><span>Points for this sighting</span><strong class="disp num" id="sheet-pts">0</strong></div>
+    <button class="primary" data-act="log" id="sheet-log">Log sighting</button>
+    <button class="link-btn danger" data-act="remove" id="sheet-remove" hidden>Remove sighting</button>
+    <button class="link-btn" data-close>Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- Game data ---------- */
+// [id, name, rarity 1-6, hype 1-5, group]. Points = 5 × rarity² × hype
+// group: m = mammal, b = bird, r = reptile, i = insect
+// Every entry is on SANParks' Addo mammal, bird or reptile lists (or named on the park homepage).
+const SPECIES = [
+  // Mammals
+  ['elephant','African elephant',1,5,'m'],
+  ['red-hartebeest','Red hartebeest',1,1,'m'],
+  ['kudu','Kudu',1,2,'m'],
+  ['zebra','Plains zebra',1,3,'m'],
+  ['warthog','Warthog',1,3,'m'],
+  ['grey-mongoose','Cape grey mongoose',2,1,'m'],
+  ['scrub-hare','Scrub hare',2,1,'m'],
+  ['eland','Eland',2,2,'m'],
+  ['jackal','Black-backed jackal',2,2,'m'],
+  ['vervet','Vervet monkey',2,3,'m'],
+  ['buffalo','Cape buffalo',2,4,'m'],
+  ['steenbok','Steenbok',3,1,'m'],
+  ['grysbok','Cape grysbok',3,1,'m'],
+  ['bushbuck','Bushbuck',3,1,'m'],
+  ['duiker','Common duiker',3,1,'m'],
+  ['cape-hare','Cape hare',3,1,'m'],
+  ['any-mouse','Any mouse, rat or shrew',3,1,'m'],
+  ['rock-hyrax','Rock hyrax (dassie)',3,2,'m'],
+  ['any-bat','Any bat',3,2,'m'],
+  ['baboon','Chacma baboon',3,3,'m'],
+  ['water-mongoose','Water mongoose',4,1,'m'],
+  ['large-grey-mongoose','Large grey mongoose',4,1,'m'],
+  ['red-rock-hare','Smith’s red rock hare',4,1,'m'],
+  ['hyena','Spotted hyena',4,3,'m'],
+  ['large-genet','Large-spotted genet',4,3,'m'],
+  ['small-genet','Small-spotted genet',4,3,'m'],
+  ['springhare','Springhare',4,3,'m'],
+  ['bat-eared-fox','Bat-eared fox',4,4,'m'],
+  ['lion','Lion',4,5,'m'],
+  ['mountain-reedbuck','Mountain reedbuck',5,1,'m'],
+  ['grey-rhebok','Grey rhebok',5,1,'m'],
+  ['bushpig','Bushpig',5,2,'m'],
+  ['wildcat','African wildcat',5,2,'m'],
+  ['springbok','Springbok',5,2,'m'],
+  ['porcupine','Porcupine',5,3,'m'],
+  ['gemsbok','Gemsbok',5,3,'m'],
+  ['mountain-zebra','Mountain zebra',5,3,'m'],
+  ['klipspringer','Klipspringer',5,3,'m'],
+  ['polecat','Striped polecat',5,3,'m'],
+  ['caracal','Caracal',5,4,'m'],
+  ['cape-fox','Cape fox',5,4,'m'],
+  ['elephant-shrew','Round-eared elephant shrew',5,4,'m'],
+  ['hedgehog','Southern African hedgehog',5,4,'m'],
+  ['meerkat','Meerkat',5,5,'m'],
+  ['hippo','Hippo',5,5,'m'],
+  ['tree-hyrax','Southern tree hyrax',6,2,'m'],
+  ['any-mole','Golden mole or mole rat',6,2,'m'],
+  ['weasel','African striped weasel',6,3,'m'],
+  ['aardvark','Aardvark',6,4,'m'],
+  ['aardwolf','Aardwolf',6,4,'m'],
+  ['brown-hyena','Brown hyena',6,4,'m'],
+  ['otter','Cape clawless otter',6,4,'m'],
+  ['leopard','Leopard',6,5,'m'],
+  ['black-rhino','Black rhino',6,5,'m'],
+  ['honey-badger','Honey badger',6,5,'m'],
+  ['black-footed-cat','Black-footed cat',6,5,'m'],
+
+  // Birds
+  ['guineafowl','Helmeted guineafowl',1,1,'b'],
+  ['crowned-lapwing','Crowned lapwing',1,1,'b'],
+  ['blacksmith-lapwing','Blacksmith lapwing',1,1,'b'],
+  ['egyptian-goose','Egyptian goose',1,1,'b'],
+  ['pied-crow','Pied crow',1,1,'b'],
+  ['glossy-starling','Cape glossy starling',1,1,'b'],
+  ['cape-weaver','Cape weaver',1,1,'b'],
+  ['masked-weaver','Southern masked weaver',1,1,'b'],
+  ['mousebird','Speckled mousebird',1,1,'b'],
+  ['laughing-dove','Laughing dove',1,1,'b'],
+  ['hadeda','Hadeda ibis',1,2,'b'],
+  ['ostrich','Ostrich',1,2,'b'],
+  ['spurfowl','Red-necked spurfowl',2,1,'b'],
+  ['steppe-buzzard','Steppe buzzard',2,1,'b'],
+  ['rock-kestrel','Rock kestrel',2,1,'b'],
+  ['boubou','Southern boubou',2,1,'b'],
+  ['drongo','Fork-tailed drongo',2,1,'b'],
+  ['red-winged-starling','Red-winged starling',2,1,'b'],
+  ['robin-chat','Cape robin-chat',2,1,'b'],
+  ['grey-heron','Grey heron',2,1,'b'],
+  ['black-headed-heron','Black-headed heron',2,1,'b'],
+  ['goshawk','Pale chanting goshawk',2,2,'b'],
+  ['jackal-buzzard','Jackal buzzard',2,2,'b'],
+  ['black-winged-kite','Black-winged kite',2,2,'b'],
+  ['sacred-ibis','African sacred ibis',2,2,'b'],
+  ['bokmakierie','Bokmakierie',2,2,'b'],
+  ['red-bishop','Southern red bishop',2,2,'b'],
+  ['whydah','Pin-tailed whydah',2,2,'b'],
+  ['yellow-billed-kite','Yellow-billed kite',3,1,'b'],
+  ['spur-winged-goose','Spur-winged goose',3,1,'b'],
+  ['harrier-hawk','African harrier-hawk',3,2,'b'],
+  ['black-korhaan','Southern black korhaan',3,2,'b'],
+  ['thick-knee','Spotted thick-knee',3,2,'b'],
+  ['shelduck','South African shelduck',3,2,'b'],
+  ['pied-kingfisher','Pied kingfisher',3,2,'b'],
+  ['brown-hooded-kingfisher','Brown-hooded kingfisher',3,2,'b'],
+  ['double-collared-sunbird','Greater double-collared sunbird',3,2,'b'],
+  ['namaqua-dove','Namaqua dove',3,2,'b'],
+  ['longclaw','Cape longclaw',3,2,'b'],
+  ['coucal','Burchell’s coucal',3,2,'b'],
+  ['any-woodpecker','Any woodpecker',3,2,'b'],
+  ['bustard','Denham’s bustard',3,2,'b'],
+  ['blue-crane','Blue crane',3,3,'b'],
+  ['secretary-bird','Secretary bird',3,3,'b'],
+  ['spotted-eagle-owl','Spotted eagle-owl',3,3,'b'],
+  ['hoopoe','African hoopoe',3,3,'b'],
+  ['european-bee-eater','European bee-eater',3,3,'b'],
+  ['malachite-sunbird','Malachite sunbird',3,3,'b'],
+  ['paradise-flycatcher','African paradise flycatcher',3,3,'b'],
+  ['grey-winged-francolin','Grey-winged francolin',4,1,'b'],
+  ['booted-eagle','Booted eagle',4,2,'b'],
+  ['lanner','Lanner falcon',4,2,'b'],
+  ['white-stork','White stork',4,2,'b'],
+  ['barrows-korhaan','Barrow’s korhaan',4,2,'b'],
+  ['courser','Double-banded courser',4,2,'b'],
+  ['nightjar','Fiery-necked nightjar',4,2,'b'],
+  ['martial-eagle','Martial eagle',4,3,'b'],
+  ['bc-snake-eagle','Black-chested snake eagle',4,3,'b'],
+  ['brown-snake-eagle','Brown snake eagle',4,3,'b'],
+  ['barn-owl','Barn owl',4,3,'b'],
+  ['hamerkop','Hamerkop',4,3,'b'],
+  ['spoonbill','African spoonbill',4,3,'b'],
+  ['giant-kingfisher','Giant kingfisher',4,3,'b'],
+  ['malachite-kingfisher','Malachite kingfisher',4,3,'b'],
+  ['crowned-hornbill','Crowned hornbill',4,3,'b'],
+  ['wf-bee-eater','White-fronted bee-eater',4,3,'b'],
+  ['widowbird','Long-tailed widowbird',4,3,'b'],
+  ['oxpecker','Red-billed oxpecker',4,3,'b'],
+  ['fish-eagle','African fish eagle',4,4,'b'],
+  ['black-harrier','Black harrier',5,2,'b'],
+  ['ludwigs-bustard','Ludwig’s bustard',5,2,'b'],
+  ['long-crested-eagle','Long-crested eagle',5,3,'b'],
+  ['peregrine','Peregrine falcon',5,3,'b'],
+  ['cape-vulture','Cape vulture',5,3,'b'],
+  ['wb-vulture','White-backed vulture',5,3,'b'],
+  ['osprey','Osprey',5,3,'b'],
+  ['wood-owl','African wood owl',5,3,'b'],
+  ['scops-owl','African scops owl',5,3,'b'],
+  ['goliath-heron','Goliath heron',5,3,'b'],
+  ['black-stork','Black stork',5,3,'b'],
+  ['trumpeter-hornbill','Trumpeter hornbill',5,3,'b'],
+  ['sugarbird','Cape sugarbird',5,3,'b'],
+  ['verreaux-eagle','Verreaux’s eagle',5,4,'b'],
+  ['bateleur','Bateleur',5,4,'b'],
+  ['verreaux-eagle-owl','Verreaux’s eagle-owl',5,4,'b'],
+  ['flamingo','Flamingo (either kind)',5,4,'b'],
+  ['turaco','Knysna turaco',5,4,'b'],
+  ['cape-eagle-owl','Cape eagle-owl',6,3,'b'],
+  ['marabou','Marabou stork',6,3,'b'],
+  ['crowned-eagle','African crowned eagle',6,4,'b'],
+  ['kori-bustard','Kori bustard',6,4,'b'],
+  ['narina-trogon','Narina trogon',6,4,'b'],
+  ['ground-hornbill','Southern ground hornbill',6,5,'b'],
+
+  // Reptiles
+  ['tortoise','Leopard tortoise',2,2,'r'],
+  ['terrapin','Marsh terrapin',3,1,'r'],
+  ['any-gecko','Any gecko',3,1,'r'],
+  ['any-skink','Any skink',3,1,'r'],
+  ['angulate','Angulate tortoise',3,2,'r'],
+  ['agama','Southern rock agama',3,2,'r'],
+  ['girdled-lizard','Cape girdled lizard',4,2,'r'],
+  ['mole-snake','Mole snake',4,2,'r'],
+  ['other-snake','Any other snake',4,2,'r'],
+  ['water-monitor','Water monitor',4,3,'r'],
+  ['puff-adder','Puff adder',4,3,'r'],
+  ['rock-monitor','Rock monitor',4,4,'r'],
+  ['night-adder','Night adder',5,2,'r'],
+  ['egg-eater','Common egg-eater',5,2,'r'],
+  ['tent-tortoise','Tent tortoise',5,2,'r'],
+  ['parrot-beaked','Parrot-beaked tortoise',5,3,'r'],
+  ['rinkhals','Rinkhals',5,3,'r'],
+  ['boomslang','Boomslang',5,4,'r'],
+  ['cape-cobra','Cape cobra',5,4,'r'],
+  ['chameleon','Dwarf chameleon',5,4,'r'],
+  ['berg-adder','Berg adder',6,2,'r'],
+  ['horned-adder','Horned adder',6,2,'r'],
+  ['albany-adder','Albany adder',6,5,'r'],
+
+  // Insects
+  ['dung-beetle','Flightless dung beetle',3,4,'i'],
+];
+const SP = {};
+SPECIES.forEach(([id,name,r,h,g]) => { SP[id] = {id,name,r,h,g,base:5*r*r*h}; });
+
+const GROUPS = [
+  {id:'all', label:'All',             test:() => true,           noun:['animal','animals']},
+  {id:'m',   label:'Mammals',         test:sp => sp.g === 'm',   noun:['mammal','mammals']},
+  {id:'b',   label:'Birds',           test:sp => sp.g === 'b',   noun:['bird','birds']},
+  {id:'r',   label:'Reptiles & bugs', test:sp => sp.g === 'r' || sp.g === 'i', noun:['reptile or bug','reptiles and bugs']},
+];
+
+const TIERS = [
+  {name:'Everyday',     test:p=>p<=15,          color:'var(--muted)'},
+  {name:'Worth a stop', test:p=>p>15&&p<=80,    color:'var(--spek)'},
+  {name:'Spicy',        test:p=>p>80&&p<=200,   color:'var(--ochre)'},
+  {name:'Big hitters',  test:p=>p>200&&p<700,   color:'var(--danger)'},
+  {name:'Legendary',    test:p=>p>=700,         color:'var(--ink)'},
+];
+TIERS.forEach(t => {
+  const pts = SPECIES.map(a => SP[a[0]]).filter(sp => sp.id !== 'elephant' && t.test(sp.base)).map(sp => sp.base);
+  t.band = `${Math.min(...pts)} to ${Math.max(...pts)} points`;
+});
+
+const MODS = [
+  {k:'called', label:'I called it first',   mult:1.5, tag:'×1.5', short:'called it'},
+  {k:'baby',   label:'With a baby',         mult:2,   tag:'×2',   short:'with baby'},
+  {k:'night',  label:'On a night drive',    mult:2,   tag:'×2',   short:'night drive'},
+  {k:'action', label:'Hunt, kill or fight', mult:3,   tag:'×3',   short:'in action'},
+];
+
+const QUESTS = [
+  ['waterhole','Drinking at a waterhole',20],
+  ['baby','Baby elephant',25],
+  ['mud','Mud or dust bath',30],
+  ['road','Crossing or blocking the road',40],
+  ['herd','Herd of 20 or more',50],
+  ['spar','Bulls sparring',100],
+];
+const QP = {}; QUESTS.forEach(([id,label,p]) => { QP[id] = {id,label,p}; });
+
+// A set either needs `need` of its `ids`, or one animal from every group in `groups`.
+const SETS = [
+  {id:'big5', name:'Big Five', need:5, bonus:1500,
+   ids:['elephant','buffalo','lion','leopard','black-rhino'],
+   note:'Elephant, buffalo, lion, leopard and black rhino'},
+  {id:'cats', name:'Cat pack', need:3, bonus:400,
+   ids:['lion','leopard','caracal','wildcat','black-footed-cat'],
+   note:'Any 3 of lion, leopard, caracal, African wildcat or black-footed cat'},
+  {id:'ugly', name:'Ugly bunch', bonus:300,
+   groups:[['warthog'],['hyena','brown-hyena'],['marabou'],['cape-vulture','wb-vulture']],
+   note:'A warthog, a hyena, a marabou stork and a vulture'},
+  {id:'night', name:'Night shift', need:3, bonus:300,
+   ids:['hyena','brown-hyena','aardwolf','bat-eared-fox','cape-fox','porcupine','caracal','aardvark','honey-badger','leopard',
+        'bushpig','wildcat','black-footed-cat','large-genet','small-genet','springhare','polecat','hedgehog','tree-hyrax'],
+   note:'Any 3 night mammals, like a hyena, genet, porcupine, springhare or aardvark'},
+  {id:'snakes', name:'Snake eyes', need:3, bonus:300,
+   ids:['puff-adder','cape-cobra','boomslang','rinkhals','mole-snake','night-adder','berg-adder','horned-adder','albany-adder','egg-eater','other-snake'],
+   note:'Any 3 snakes, seen safely from the car'},
+  {id:'antelope', name:'Antelope sweep', need:7, bonus:250,
+   ids:['kudu','red-hartebeest','eland','bushbuck','steenbok','grysbok','duiker','gemsbok','springbok','klipspringer','mountain-reedbuck','grey-rhebok'],
+   note:'Any 7 kinds of antelope'},
+  {id:'raptors', name:'Raptor run', need:6, bonus:250,
+   ids:['secretary-bird','goshawk','jackal-buzzard','steppe-buzzard','black-winged-kite','yellow-billed-kite','rock-kestrel','harrier-hawk',
+        'booted-eagle','lanner','martial-eagle','bc-snake-eagle','brown-snake-eagle','fish-eagle','black-harrier','long-crested-eagle',
+        'peregrine','cape-vulture','wb-vulture','osprey','verreaux-eagle','bateleur','crowned-eagle'],
+   note:'Any 6 birds of prey (eagles, buzzards, kites, falcons, vultures and friends)'},
+  {id:'birds', name:'Big birds', need:4, bonus:200,
+   ids:['ostrich','secretary-bird','bustard','blue-crane'],
+   note:'Ostrich, secretary bird, Denham’s bustard and blue crane'},
+  {id:'shells', name:'Shell collector', need:3, bonus:200,
+   ids:['tortoise','angulate','tent-tortoise','parrot-beaked','terrapin'],
+   note:'Any 3 tortoises or terrapins'},
+];
+
+const FREE = {id:'free', text:'Any elephant', free:true};
+const CLASSIC = [
+  {id:'c-zebra', text:'Plains zebra', s:'zebra'},
+  {id:'c-warthog', text:'Warthog', s:'warthog'},
+  {id:'c-kudu', text:'Kudu', s:'kudu'},
+  {id:'c-ostrich', text:'Ostrich', s:'ostrich'},
+  {id:'c-hartebeest', text:'Red hartebeest', s:'red-hartebeest'},
+  {id:'c-jackal', text:'Black-backed jackal', s:'jackal'},
+  {id:'c-tortoise', text:'Leopard tortoise', s:'tortoise'},
+  {id:'c-buffalo', text:'Cape buffalo', s:'buffalo'},
+  {id:'c-mongoose', text:'Cape grey mongoose', s:'grey-mongoose'},
+  {id:'c-eland', text:'Eland', s:'eland'},
+  {id:'c-guineafowl', text:'Guineafowl', s:'guineafowl'},
+  {id:'c-hadeda', text:'Hadeda ibis', s:'hadeda'},
+  {id:'c-goose', text:'Egyptian goose', s:'egyptian-goose'},
+  {id:'c-bokmakierie', text:'Bokmakierie', s:'bokmakierie'},
+  {id:'c-baby', text:'Baby elephant', q:'baby'},
+  {id:'c-road', text:'Elephants cross the road', q:'road'},
+  {id:'c-mud', text:'Elephant mud bath', q:'mud'},
+  {id:'c-drink', text:'Elephant drinking', q:'waterhole'},
+  {id:'c-dung', text:'Elephant dung on the road'},
+  {id:'c-sign', text:'Dung beetle road sign'},
+  {id:'c-jam', text:'Cars stopped, staring at nothing'},
+  {id:'c-raptor', text:'Any bird of prey'},
+  {id:'c-combo', text:'Zebra and warthog in one view'},
+  {id:'c-stop', text:'Someone yells “Stop!”'},
+  {id:'c-spiral', text:'Kudu bull with spiral horns'},
+  {id:'c-picnic', text:'Picnic at Jack’s'},
+  {id:'c-run', text:'Animals running'},
+  {id:'c-close', text:'Elephant within a car-length'},
+];
+const CHALLENGE = [
+  {id:'h-lion', text:'Lion', s:'lion'},
+  {id:'h-hyena', text:'Spotted hyena', s:'hyena'},
+  {id:'h-secretary', text:'Secretary bird', s:'secretary-bird'},
+  {id:'h-fox', text:'Bat-eared fox', s:'bat-eared-fox'},
+  {id:'h-caracal', text:'Caracal', s:'caracal'},
+  {id:'h-bushbuck', text:'Bushbuck', s:'bushbuck'},
+  {id:'h-steenbok', text:'Steenbok', s:'steenbok'},
+  {id:'h-grysbok', text:'Cape grysbok', s:'grysbok'},
+  {id:'h-duiker', text:'Common duiker', s:'duiker'},
+  {id:'h-beetle', text:'Flightless dung beetle', s:'dung-beetle'},
+  {id:'h-crane', text:'Blue crane', s:'blue-crane'},
+  {id:'h-bustard', text:'Denham’s bustard', s:'bustard'},
+  {id:'h-eagle', text:'Martial eagle', s:'martial-eagle'},
+  {id:'h-porcupine', text:'Porcupine', s:'porcupine'},
+  {id:'h-baboon', text:'Chacma baboon', s:'baboon'},
+  {id:'h-monitor', text:'Rock monitor', s:'rock-monitor'},
+  {id:'h-fisheagle', text:'African fish eagle', s:'fish-eagle'},
+  {id:'h-owl', text:'Spotted eagle-owl', s:'spotted-eagle-owl'},
+  {id:'h-hamerkop', text:'Hamerkop', s:'hamerkop'},
+  {id:'h-angulate', text:'Angulate tortoise', s:'angulate'},
+  {id:'h-springhare', text:'Springhare', s:'springhare'},
+  {id:'h-spar', text:'Elephant bulls sparring', q:'spar'},
+  {id:'h-roar', text:'Hear a lion roar'},
+  {id:'h-ball', text:'Dung beetle rolling a ball'},
+  {id:'h-herd30', text:'Herd of 30+ elephants'},
+  {id:'h-buffherd', text:'Buffalo herd of 20+'},
+  {id:'h-lionroad', text:'Lion on the road'},
+  {id:'h-babyzebra', text:'Baby zebra'},
+  {id:'h-tortroad', text:'Tortoise crossing the road'},
+  {id:'h-catch', text:'Bird of prey with a catch'},
+  {id:'h-jackals', text:'Two jackals together'},
+  {id:'h-swim', text:'Elephant wading deep in water'},
+];
+const SQ = {free:FREE};
+CLASSIC.concat(CHALLENGE).forEach(x => { SQ[x.id] = x; });
+const FULL = {classic:1000, challenge:2500};
+const LINES = [
+  [0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],
+  [0,4,8,12],[1,5,9,13],[2,6,10,14],[3,7,11,15],
+  [0,5,10,15],[3,6,9,12],
+];
+
+/* ---------- State ---------- */
+const KEY = 'addo-bingo-v1';
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+function deal(kind){
+  const pool = shuffle((kind==='classic'?CLASSIC:CHALLENGE).map(x=>x.id));
+  const ids = pool.slice(0, kind==='classic'?15:16);
+  if (kind==='classic') ids.splice(Math.floor(Math.random()*16), 0, 'free');
+  return {ids, marks:{}};
+}
+function fresh(){
+  return {name:'', introDone:false, sightings:{}, quests:{}, sticks:[],
+    cards:{classic:deal('classic'), challenge:deal('challenge')},
+    seen:{sets:{}, bingo:{classic:0, challenge:0}}, theme:'auto', bingoView:'classic', offlineToasted:false};
+}
+function validCard(c){ return c && Array.isArray(c.ids) && c.ids.length===16 && c.ids.every(id=>SQ[id]) && c.marks && typeof c.marks==='object'; }
+function loadState(){
+  const f = fresh();
+  let s = null;
+  try { s = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
+  if (!s || typeof s!=='object') return f;
+  const seen = s.seen || {};
+  return Object.assign(f, s, {
+    sightings: s.sightings || {}, quests: s.quests || {}, sticks: Array.isArray(s.sticks) ? s.sticks : [],
+    cards: {
+      classic: validCard(s.cards && s.cards.classic) ? s.cards.classic : f.cards.classic,
+      challenge: validCard(s.cards && s.cards.challenge) ? s.cards.challenge : f.cards.challenge,
+    },
+    seen: {sets: seen.sets || {}, bingo: Object.assign({classic:0, challenge:0}, seen.bingo || {})},
+  });
+}
+let S = loadState();
+let saveWarned = false;
+function save(){
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch(e){ if(!saveWarned){ saveWarned = true; toast('This phone blocked saving. Turn off private browsing so your score is kept.'); } }
+}
+
+/* ---------- Scoring ---------- */
+function multOf(m){ let x = 1; MODS.forEach(md => { if (m && m[md.k]) x *= md.mult; }); return x; }
+function sightingPts(id, sg){ return Math.round(SP[id].base * multOf(sg)); }
+function setState(set){
+  if (set.groups){
+    const have = set.groups.filter(g => g.some(id => S.sightings[id])).length;
+    return {have, need: set.groups.length, done: have >= set.groups.length};
+  }
+  const have = set.ids.filter(id => S.sightings[id]).length;
+  return {have, need: set.need, done: have >= set.need};
+}
+function squareDone(item, card){
+  return !!(item.free || (item.s && S.sightings[item.s]) || (item.q && S.quests[item.q]) || card.marks[item.id]);
+}
+function bingoState(kind){
+  const card = S.cards[kind];
+  const done = card.ids.map(id => squareDone(SQ[id], card));
+  const lines = LINES.filter(l => l.every(i => done[i]));
+  const full = done.every(Boolean);
+  const n = lines.length;
+  const lvl = full ? 3 : n >= 2 ? 2 : n === 1 ? 1 : 0;
+  const pts = (n >= 2 ? 250 : n === 1 ? 100 : 0) + (full ? FULL[kind] : 0);
+  return {done, lines, full, lvl, pts};
+}
+function totals(){
+  let sight = 0; for (const id in S.sightings) if (SP[id]) sight += sightingPts(id, S.sightings[id]);
+  let quest = 0; QUESTS.forEach(([id,,p]) => { if (S.quests[id]) quest += p; });
+  let sets = 0; SETS.forEach(st => { if (setState(st).done) sets += st.bonus; });
+  const bc = bingoState('classic').pts, bh = bingoState('challenge').pts;
+  const sticks = -10 * S.sticks.length;
+  return {sight, quest, sets, bc, bh, sticks, total: sight + quest + sets + bc + bh + sticks};
+}
+
+/* ---------- Helpers ---------- */
+const $ = s => document.querySelector(s);
+const fmt = n => (n < 0 ? '−' : '') + Math.abs(n).toLocaleString('en-US');
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const when = t => new Date(t).toLocaleString('en-GB', {weekday:'short', hour:'2-digit', minute:'2-digit'}).replace(',', '');
+const modText = sg => { const p = MODS.filter(m => sg[m.k]).map(m => m.short); return p.length ? ', ' + p.join(', ') : ''; };
+const buzz = () => { try { if (navigator.vibrate) navigator.vibrate(12); } catch(e) {} };
+
+const tq = []; let tBusy = false;
+function toast(msg){ tq.push(msg); if (!tBusy) nextToast(); }
+function nextToast(){
+  const el = $('#toast');
+  if (!tq.length){ tBusy = false; return; }
+  tBusy = true; el.textContent = tq.shift(); el.classList.add('show');
+  setTimeout(() => { el.classList.remove('show'); setTimeout(nextToast, 260); }, 2600);
+}
+
+/* ---------- Rendering ---------- */
+let stampId = null, stampSq = null, lastTotal = null;
+
+function meter(label, n, max, cls){
+  let d = ''; for (let i=1;i<=max;i++) d += `<i class="${i<=n?'on':''}"></i>`;
+  return `<span class="meter ${cls}" role="img" aria-label="${label} ${n} of ${max}"><span class="ml" aria-hidden="true">${label}</span>${d}</span>`;
+}
+function rowHTML(sp){
+  const sg = S.sightings[sp.id];
+  const pts = sg ? sightingPts(sp.id, sg) : sp.base;
+  const meta = sg
+    ? `<span class="meta got-meta">Spotted ${when(sg.t)}${modText(sg)}</span>`
+    : `<span class="meta">${meter('Rarity', sp.r, 6, 'r')}${meter('Hype', sp.h, 5, 'h')}</span>`;
+  return `<li><button class="row${sg?' got':''}" data-s="${sp.id}"><span class="row-main"><span class="row-name">${sp.name}</span>${meta}</span><span class="pts${stampId===sp.id?' stamp-in':''}">${fmt(pts)}</span></button></li>`;
+}
+function elephantPanel(){
+  const sg = S.sightings.elephant;
+  const pts = sg ? sightingPts('elephant', sg) : SP.elephant.base;
+  const chips = QUESTS.map(([id,label,p]) =>
+    `<button class="chip" data-q="${id}" aria-pressed="${!!S.quests[id]}"><span>${label}</span><b>+${p}</b></button>`).join('');
+  return `<section class="ele">
+    <button class="ele-row${sg?' got':''}" data-s="elephant">
+      <span><span class="ele-name disp">African elephant</span>
+      <span class="ele-sub">${sg ? 'Spotted ' + when(sg.t) + modText(sg) : 'There are hundreds here, so elephant moments score extra.'}</span></span>
+      <span class="pts${stampId==='elephant'?' stamp-in':''}">${fmt(pts)}</span>
+    </button>
+    <div class="quests">${chips}</div>
+  </section>`;
+}
+let group = 'all';
+function renderSpot(){
+  const q = $('#search').value.trim().toLowerCase();
+  const G = GROUPS.find(g => g.id === group);
+  const match = sp => G.test(sp) && (!q || sp.name.toLowerCase().includes(q));
+  const inGroup = SPECIES.map(a => SP[a[0]]).filter(G.test);
+  const count = inGroup.filter(sp => S.sightings[sp.id]).length;
+  let html = `<p class="progress">${count} of ${inGroup.length} ${G.noun[inGroup.length === 1 ? 0 : 1]} spotted</p>`;
+  let shown = 0;
+  if (match(SP.elephant)) { html += elephantPanel(); shown++; }
+  TIERS.forEach(t => {
+    const list = SPECIES.map(a => SP[a[0]]).filter(sp => sp.id !== 'elephant' && t.test(sp.base) && match(sp));
+    if (!list.length) return;
+    shown += list.length;
+    html += `<section class="tier" style="--tier:${t.color}"><div class="tier-head"><h2 class="disp">${t.name}</h2><span class="band">${t.band}</span></div><ul class="list">${list.map(rowHTML).join('')}</ul></section>`;
+  });
+  if (!shown) html += G.id === 'all'
+    ? `<p class="empty">Nothing on the list matches “${esc(q)}”. Try part of the name, like “fox” or “bok”.</p>`
+    : `<p class="empty">No ${G.noun[1]} match “${esc(q)}”. Switch to All to search every animal.</p>`;
+  $('#spot-list').innerHTML = html;
+  document.querySelectorAll('[data-group]').forEach(b => b.setAttribute('aria-pressed', b.dataset.group === group));
+  $('#intro').hidden = !!S.introDone;
+}
+function renderBingo(){
+  const k = S.bingoView, card = S.cards[k], b = bingoState(k);
+  const inLine = new Set(b.lines.flat());
+  const n = b.lines.length;
+  const status = b.full ? `Full card! ${fmt(b.pts)} points`
+    : n >= 2 ? `${n} lines: 250 points` : n === 1 ? 'Bingo! 100 points' : 'No lines yet';
+  const help = b.full ? 'Nothing left to tick on this card.'
+    : n === 0 ? (k === 'classic' ? 'Doable in a day. One line scores 100.' : 'For sharp eyes. One line scores 100.')
+    : n === 1 ? 'A second line takes it to 250.'
+    : `Fill the whole card for a ${fmt(FULL[k])} point bonus.`;
+  const squares = card.ids.map((id, i) => {
+    const it = SQ[id], done = b.done[i];
+    const cls = 'sq' + (done ? ' done' : '') + (inLine.has(i) ? ' inline' : '') + (stampSq === id ? ' stamp-sq' : '');
+    return `<button class="${cls}" data-sq="${id}" aria-pressed="${done}"><span class="sq-t">${esc(it.text)}${it.free ? '<small>Free, it’s Addo</small>' : ''}</span></button>`;
+  }).join('');
+  $('#bingo-body').innerHTML = `
+    <p class="bingo-status disp">${status}</p>
+    <p class="bingo-help">${help}</p>
+    <div class="grid">${squares}</div>
+    <p class="note">Animal and elephant squares tick themselves when you log them.</p>
+    <button class="link-btn" data-act="deal">Deal a new ${k === 'classic' ? 'Classic' : 'Challenge'} card</button>`;
+  document.querySelectorAll('[data-view]').forEach(el => el.setAttribute('aria-pressed', el.dataset.view === k));
+}
+function renderScore(T){
+  const sets = SETS.map(st => {
+    const s = setState(st);
+    return `<li><span class="label">${st.name}<small>${st.note}</small></span>
+      <span style="text-align:right"><span class="v${s.done?'':' off'}">${s.done ? '+' + fmt(st.bonus) : fmt(st.bonus)}</span>
+      <span class="prog${s.done?' done-mark':''}" style="display:block">${s.done ? 'Done' : Math.min(s.have, s.need) + ' of ' + s.need}</span></span></li>`;
+  }).join('');
+  const row = (label, v, sub) => `<li><span class="label">${label}${sub ? `<small>${sub}</small>` : ''}</span><span class="v${v===0?' off':''}">${fmt(v)}</span></li>`;
+  const spotted = Object.keys(S.sightings).filter(id => SP[id]).length;
+  const ticked = Object.keys(S.quests).filter(id => QP[id]).length;
+  $('#score-body').innerHTML = `
+    <div class="score-hero"><h2 class="disp">${S.name ? esc(S.name) + '’s total' : 'Your total'}</h2><span class="disp num">${fmt(T.total)}</span></div>
+    <ul class="rows">
+      ${row('Animals', T.sight, `${spotted} of ${SPECIES.length} spotted`)}
+      ${row('Elephant moments', T.quest, `${ticked} of ${QUESTS.length} ticked`)}
+      ${row('Sets', T.sets)}
+      ${row('Classic bingo', T.bc)}
+      ${row('Challenge bingo', T.bh)}
+      ${row('Stick-o-sauruses', T.sticks, S.sticks.length ? `${S.sticks.length} so far` : '')}
+    </ul>
+    <h2 class="sec-h disp">Sets</h2>
+    <p class="sec-p">Bonus points for collecting a group. These add themselves.</p>
+    <ul class="rows">${sets}</ul>`;
+  $('#unstick').hidden = !S.sticks.length;
+
+  const log = [];
+  for (const id in S.sightings) if (SP[id]) log.push({t:S.sightings[id].t, title:SP[id].name, sub:modText(S.sightings[id]).replace(/^, /,''), pts:sightingPts(id, S.sightings[id])});
+  for (const id in S.quests) if (QP[id]) log.push({t:S.quests[id], title:'Elephant: ' + QP[id].label.toLowerCase(), sub:'', pts:QP[id].p});
+  S.sticks.forEach(t => log.push({t, title:'Stick-o-saurus', sub:'', pts:-10}));
+  log.sort((a,b) => b.t - a.t);
+  $('#log-body').innerHTML = `<h2 class="sec-h disp">Your log</h2>` + (log.length
+    ? `<ul class="rows">${log.map(e => `<li><span class="label">${esc(e.title)}<small>${when(e.t)}${e.sub ? ', ' + esc(e.sub) : ''}</small></span><span class="v">${e.pts > 0 ? '+' : ''}${fmt(e.pts)}</span></li>`).join('')}</ul>`
+    : `<p class="sec-p">Nothing logged yet. Go to Spot and tap the first animal you see.</p>`);
+}
+function renderHeader(T){
+  const el = $('#total');
+  el.textContent = fmt(T.total);
+  if (lastTotal !== null && lastTotal !== T.total){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+  lastTotal = T.total;
+  $('#brand-sub').textContent = S.name ? `Safari Bingo with ${S.name}` : 'Safari Bingo';
+}
+function applyTheme(){
+  const r = document.documentElement;
+  if (S.theme === 'auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme', S.theme);
+  document.querySelectorAll('[data-theme-set]').forEach(b => b.setAttribute('aria-pressed', b.dataset.themeSet === S.theme));
+}
+function renderAll(){
+  const T = totals();
+  renderHeader(T); renderSpot(); renderBingo(); renderScore(T);
+  stampId = null; stampSq = null;
+}
+
+/* ---------- Milestones ---------- */
+function checkMilestones(){
+  SETS.forEach(st => {
+    const done = setState(st).done;
+    if (done && !S.seen.sets[st.id]) toast(`${st.name} complete! +${fmt(st.bonus)}`);
+    S.seen.sets[st.id] = done;
+  });
+  ['classic','challenge'].forEach(k => {
+    const b = bingoState(k), was = S.seen.bingo[k] || 0, name = k === 'classic' ? 'Classic' : 'Challenge';
+    if (b.lvl > was){
+      if (b.lvl === 3) toast(`Full ${name} card! +${fmt(FULL[k])} bonus`);
+      else if (b.lvl === 2) toast(`Two lines on your ${name} card: 250 points`);
+      else toast(`Bingo! One line on your ${name} card: +100`);
+    }
+    S.seen.bingo[k] = b.lvl;
+  });
+}
+function changed(){ checkMilestones(); save(); renderAll(); }
+
+/* ---------- Sheet ---------- */
+let sheetId = null, draft = null, lastFocus = null;
+function openSheet(id){
+  sheetId = id;
+  const sg = S.sightings[id] || {};
+  draft = {}; MODS.forEach(m => { draft[m.k] = !!sg[m.k]; });
+  renderSheet();
+  lastFocus = document.activeElement;
+  $('#sheet').hidden = false;
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => $('#sheet-log').focus({preventScroll:true}), 30);
+}
+function renderSheet(){
+  const sp = SP[sheetId], logged = !!S.sightings[sheetId];
+  $('#sheet-title').textContent = sp.name;
+  $('#sheet-formula').textContent = `Rarity ${sp.r}, hype ${sp.h}: 5 × ${sp.r}² × ${sp.h} = ${fmt(sp.base)} base points`;
+  $('#sheet-mods').innerHTML = MODS.map(m =>
+    `<button class="mod" data-mod="${m.k}" aria-pressed="${draft[m.k]}"><span>${m.label}</span><b>${m.tag}</b></button>`).join('');
+  $('#sheet-pts').textContent = fmt(Math.round(sp.base * multOf(draft)));
+  $('#sheet-log').textContent = logged ? 'Update sighting' : 'Log sighting';
+  $('#sheet-remove').hidden = !logged;
+}
+function closeSheet(){
+  $('#sheet').hidden = true; document.body.style.overflow = ''; sheetId = null;
+  if (lastFocus && document.contains(lastFocus)) lastFocus.focus({preventScroll:true});
+}
+
+/* ---------- Actions ---------- */
+function logSighting(){
+  const prev = S.sightings[sheetId];
+  S.sightings[sheetId] = Object.assign({t: prev ? prev.t : Date.now()}, draft);
+  stampId = sheetId;
+  const id = S.cards[S.bingoView].ids.find(x => SQ[x].s === sheetId);
+  if (id) stampSq = id;
+  buzz(); closeSheet(); changed();
+}
+function removeSighting(){
+  const sp = SP[sheetId];
+  if (!confirm(`Remove your ${sp.name} sighting?`)) return;
+  delete S.sightings[sheetId];
+  closeSheet(); changed();
+  toast(`${sp.name} removed`);
+}
+function toggleQuest(id){
+  if (S.quests[id]) { delete S.quests[id]; }
+  else {
+    S.quests[id] = Date.now(); buzz();
+    if (!S.sightings.elephant){ S.sightings.elephant = {t: Date.now()}; stampId = 'elephant'; toast('Elephant logged too'); }
+  }
+  changed();
+}
+function tapSquare(id){
+  const it = SQ[id];
+  if (it.free) { toast('Free square. Everyone sees an elephant at Addo.'); return; }
+  if (it.s) { openSheet(it.s); return; }
+  if (it.q) { stampSq = id; toggleQuest(it.q); return; }
+  const card = S.cards[S.bingoView];
+  if (card.marks[id]) delete card.marks[id]; else { card.marks[id] = Date.now(); stampSq = id; buzz(); }
+  changed();
+}
+function showTab(name){
+  document.querySelectorAll('.panel').forEach(p => { p.hidden = p.id !== 'tab-' + name; });
+  document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
+  window.scrollTo(0, 0);
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-s],[data-q],[data-sq],[data-tab],[data-mod],[data-close],[data-view],[data-theme-set],[data-group],[data-act]');
+  if (!t) return;
+  const d = t.dataset;
+  if (d.s) return openSheet(d.s);
+  if (d.q) return toggleQuest(d.q);
+  if (d.sq) return tapSquare(d.sq);
+  if (d.tab) return showTab(d.tab);
+  if (d.mod) { draft[d.mod] = !draft[d.mod]; renderSheet(); return; }
+  if ('close' in d) return closeSheet();
+  if (d.view) { S.bingoView = d.view; save(); renderBingo(); return; }
+  if (d.themeSet) { S.theme = d.themeSet; save(); applyTheme(); return; }
+  if (d.group) { group = d.group; renderSpot(); window.scrollTo(0, 0); return; }
+  switch (d.act){
+    case 'log': return logSighting();
+    case 'remove': return removeSighting();
+    case 'deal': {
+      const k = S.bingoView, name = k === 'classic' ? 'Classic' : 'Challenge';
+      if (!confirm(`Deal a new ${name} card? Squares you ticked by hand on this card are cleared. Your animals stay logged.`)) return;
+      S.cards[k] = deal(k); S.seen.bingo[k] = 0; changed(); toast(`New ${name} card dealt`); return;
+    }
+    case 'stick': S.sticks.push(Date.now()); buzz(); changed(); toast('Stick-o-saurus logged: −10'); return;
+    case 'unstick': S.sticks.pop(); changed(); return;
+    case 'reset':
+      if (!confirm('Reset everything? This clears your animals, bingo cards and score on this phone.')) return;
+      { const keepTheme = S.theme; S = fresh(); S.theme = keepTheme; S.offlineToasted = true; }
+      $('#name-input').value = ''; save(); applyTheme(); renderAll(); showTab('spot'); toast('Game reset'); return;
+    case 'intro-go': {
+      const v = $('#intro-name').value.trim();
+      if (v) { S.name = v; $('#name-input').value = v; }
+      S.introDone = true; changed(); return;
+    }
+    case 'intro-skip': S.introDone = true; changed(); return;
+  }
+});
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+$('#search').addEventListener('input', renderSpot);
+$('#name-input').addEventListener('input', e => { S.name = e.target.value.trim(); save(); renderHeader(totals()); renderScore(totals()); });
+$('#intro-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.querySelector('[data-act="intro-go"]').click(); } });
+
+/* ---------- Static bits ---------- */
+$('#rules-sets').innerHTML = SETS.map(st => `<li><strong>${st.name}</strong> (+${fmt(st.bonus)}): ${st.note}.</li>`).join('');
+$('#name-input').value = S.name || '';
+
+/* ---------- Offline ---------- */
+function setOffline(text, cls){ const el = $('#offline-status'); el.textContent = text; el.className = 'status ' + (cls || ''); }
+if (!('serviceWorker' in navigator)) {
+  setOffline('This browser can’t save the game for offline play. Use Safari on iPhone or Chrome on Android.', 'warn');
+} else if (!/^https?:$/.test(location.protocol)) {
+  setOffline('Offline saving starts once the game is hosted online, for example on GitHub Pages.', 'warn');
+} else {
+  navigator.serviceWorker.register('sw.js').catch(() => setOffline('Couldn’t set up offline play. Reload the page while you have signal.', 'warn'));
+  navigator.serviceWorker.ready.then(() => {
+    setOffline('Ready for offline play on this phone.', 'ok');
+    if (!S.offlineToasted) { S.offlineToasted = true; save(); toast('Saved for offline play. It will work with no signal.'); }
+  });
+}
+
+const hdr = document.querySelector('.top');
+const setH = () => document.documentElement.style.setProperty('--header-h', hdr.offsetHeight + 'px');
+setH();
+if ('ResizeObserver' in window) new ResizeObserver(setH).observe(hdr); else window.addEventListener('resize', setH);
+
+applyTheme();
+renderAll();
+})();
+</script>
+</body>
+</html>
