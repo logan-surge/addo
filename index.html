@@ -96,16 +96,6 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
 .letter .tier-head{border-bottom-width:1px;border-color:var(--line)}
 .letter .tier-head h2{font-size:22px;color:var(--muted)}
 
-.ele{background:var(--thicket);color:var(--on-thicket);border-radius:20px;padding:16px;margin:14px 0 6px}
-.ele-row{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px}
-.ele-name{display:block;font-size:28px;line-height:1}
-.ele-sub{display:block;font-size:14px;opacity:.8;margin-top:5px}
-.ele .pts{color:var(--ochre)}
-.quests{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
-.chip{display:flex;justify-content:space-between;align-items:center;gap:6px;min-height:52px;padding:9px 11px;border-radius:11px;
-  border:1.5px solid rgba(236,230,207,.32);font-size:14px;line-height:1.2;font-weight:500}
-.chip b{font-family:var(--display);font-stretch:condensed;font-size:18px;white-space:nowrap}
-.chip[aria-pressed="true"]{background:var(--ochre);border-color:var(--ochre);color:#271B00}
 
 .tier{margin-top:24px}
 .tier-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;border-bottom:3px solid var(--tier,var(--ink));padding-bottom:5px}
@@ -126,7 +116,6 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
 .meter.h i.on{background:var(--ochre-ink)}
 .pts{font-family:var(--display);font-stretch:condensed;font-weight:800;font-size:25px;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
 .got .pts{background:var(--thicket);color:var(--ochre);padding:5px 11px 4px;border-radius:999px;box-shadow:0 0 0 2px var(--ochre);transform:rotate(-6deg)}
-.ele .got .pts{background:var(--ochre);color:#271B00;box-shadow:0 0 0 2px var(--on-thicket)}
 .stamp-in{animation:stamp .34s cubic-bezier(.2,1.5,.45,1)}
 @keyframes stamp{from{transform:scale(1.9) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(-6deg);opacity:1}}
 .empty{color:var(--muted);margin:24px 2px}
@@ -147,7 +136,7 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
 .bingo-help{font-size:14px;color:var(--muted);margin:0}
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:14px 0 10px}
 .sq{position:relative;aspect-ratio:1/1;border-radius:9px;background:var(--surface);border:1px solid var(--line);
-  font-size:12.5px;line-height:1.18;font-weight:600;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:clamp(11px,3.2vw,12.5px);line-height:1.18;font-weight:600;padding:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;
   text-align:center;overflow:hidden;-webkit-hyphens:auto;hyphens:auto;overflow-wrap:anywhere}
 .sq small{display:block;font-size:10px;font-weight:700;margin-top:3px;opacity:.75}
 .sq.done{background:var(--thicket);color:var(--on-thicket);border-color:var(--thicket)}
@@ -323,14 +312,12 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
     </ul>
     <p class="example">A lion on a kill, on a night drive, that you called first: 400 × 1.5 × 2 × 3 = 3,600.</p>
 
-    <h2 class="disp">Elephant moments</h2>
-    <p>Addo has hundreds of elephants, so the sighting itself is only 25. The moments are one-off bonuses: tick each the first time it happens.</p>
 
     <h2 class="disp">Sets</h2>
     <ul id="rules-sets"></ul>
 
     <h2 class="disp">Bingo</h2>
-    <p>You get a Classic card and a Challenge card, and every phone deals its own. Animal and elephant squares tick themselves when you log them. Tap any other square when it happens.</p>
+    <p>You get a Classic card and a Challenge card, and every phone deals its own. Classic mixes everyday sightings with a few trickier ones. Challenge mixes trickier ones with proper hard ones. Animal squares tick themselves when you log the animal. Tap any other square when it happens.</p>
     <ul>
       <li>One line (row, column or diagonal): 100</li>
       <li>Two lines: 250</li>
@@ -591,7 +578,7 @@ const TIERS = [
   {name:'Legendary',    test:p=>p>=700,         color:'var(--ink)'},
 ];
 TIERS.forEach(t => {
-  const pts = SPECIES.map(a => SP[a[0]]).filter(sp => sp.id !== 'elephant' && t.test(sp.base)).map(sp => sp.base);
+  const pts = SPECIES.map(a => SP[a[0]]).filter(sp => t.test(sp.base)).map(sp => sp.base);
   t.band = `${Math.min(...pts)} to ${Math.max(...pts)} points`;
 });
 
@@ -601,16 +588,6 @@ const MODS = [
   {k:'night',  label:'On a night drive',    mult:2,   tag:'×2',   short:'night drive'},
   {k:'action', label:'Hunt, kill or fight', mult:3,   tag:'×3',   short:'in action'},
 ];
-
-const QUESTS = [
-  ['waterhole','Drinking at a waterhole',20],
-  ['baby','Baby elephant',25],
-  ['mud','Mud or dust bath',30],
-  ['road','Crossing or blocking the road',40],
-  ['herd','Herd of 20 or more',50],
-  ['spar','Bulls sparring',100],
-];
-const QP = {}; QUESTS.forEach(([id,label,p]) => { QP[id] = {id,label,p}; });
 
 // A set either needs `need` of its `ids`, or one animal from every group in `groups`.
 const SETS = [
@@ -646,73 +623,76 @@ const SETS = [
    note:'Any 3 tortoises or terrapins'},
 ];
 
-const FREE = {id:'free', text:'Any elephant', free:true};
-const CLASSIC = [
-  {id:'c-zebra', text:'Plains zebra', s:'zebra'},
-  {id:'c-warthog', text:'Warthog', s:'warthog'},
-  {id:'c-kudu', text:'Kudu', s:'kudu'},
-  {id:'c-ostrich', text:'Ostrich', s:'ostrich'},
-  {id:'c-hartebeest', text:'Red hartebeest', s:'red-hartebeest'},
-  {id:'c-jackal', text:'Black-backed jackal', s:'jackal'},
-  {id:'c-tortoise', text:'Leopard tortoise', s:'tortoise'},
-  {id:'c-buffalo', text:'Cape buffalo', s:'buffalo'},
-  {id:'c-mongoose', text:'Cape grey mongoose', s:'grey-mongoose'},
-  {id:'c-eland', text:'Eland', s:'eland'},
-  {id:'c-guineafowl', text:'Guineafowl', s:'guineafowl'},
-  {id:'c-hadeda', text:'Hadeda ibis', s:'hadeda'},
-  {id:'c-goose', text:'Egyptian goose', s:'egyptian-goose'},
-  {id:'c-bokmakierie', text:'Bokmakierie', s:'bokmakierie'},
-  {id:'c-baby', text:'Baby elephant', q:'baby'},
-  {id:'c-road', text:'Elephants cross the road', q:'road'},
-  {id:'c-mud', text:'Elephant mud bath', q:'mud'},
-  {id:'c-drink', text:'Elephant drinking', q:'waterhole'},
-  {id:'c-dung', text:'Elephant dung on the road'},
-  {id:'c-sign', text:'Dung beetle road sign'},
-  {id:'c-jam', text:'Cars stopped, staring at nothing'},
-  {id:'c-raptor', text:'Any bird of prey'},
-  {id:'c-combo', text:'Zebra and warthog in one view'},
-  {id:'c-stop', text:'Someone yells “Stop!”'},
-  {id:'c-spiral', text:'Kudu bull with spiral horns'},
-  {id:'c-picnic', text:'Picnic at Jack’s'},
-  {id:'c-run', text:'Animals running'},
-  {id:'c-close', text:'Elephant within a car-length'},
+// d: e = easy, m = medium, h = hard. Classic deals 9 easy + 7 medium; Challenge deals 9 medium + 7 hard.
+const SQUARES = [
+  {d:'e', id:'ez-zebra', text:'Plains zebra', s:'zebra'},
+  {d:'e', id:'ez-warthog', text:'Warthog', s:'warthog'},
+  {d:'e', id:'ez-kudu', text:'Kudu', s:'kudu'},
+  {d:'e', id:'ez-hartebeest', text:'Red hartebeest', s:'red-hartebeest'},
+  {d:'e', id:'ez-ostrich', text:'Ostrich', s:'ostrich'},
+  {d:'e', id:'ez-guineafowl', text:'Guineafowl', s:'guineafowl'},
+  {d:'e', id:'ez-hadeda', text:'Hadeda ibis', s:'hadeda'},
+  {d:'e', id:'ez-goose', text:'Egyptian goose', s:'egyptian-goose'},
+  {d:'e', id:'ez-crow', text:'Pied crow', s:'pied-crow'},
+  {d:'e', id:'ez-babyele', text:'Baby elephant'},
+  {d:'e', id:'ez-crossing', text:'Elephants cross the road'},
+  {d:'e', id:'ez-drinking', text:'Elephant drinking'},
+  {d:'e', id:'ez-close', text:'Elephant within a car-length'},
+  {d:'e', id:'ez-dung', text:'Elephant dung on the road'},
+  {d:'e', id:'ez-sign', text:'Dung beetle road sign'},
+  {d:'e', id:'ez-jam', text:'Cars stopped, staring at nothing'},
+  {d:'e', id:'ez-raptor', text:'Any bird of prey'},
+  {d:'e', id:'ez-combo', text:'Zebra and warthog in one view'},
+  {d:'e', id:'ez-stop', text:'Someone yells “Stop!”'},
+  {d:'e', id:'ez-picnic', text:'Picnic at Jack’s'},
+
+  {d:'m', id:'md-buffalo', text:'Cape buffalo', s:'buffalo'},
+  {d:'m', id:'md-eland', text:'Eland', s:'eland'},
+  {d:'m', id:'md-jackal', text:'Black-backed jackal', s:'jackal'},
+  {d:'m', id:'md-tortoise', text:'Leopard tortoise', s:'tortoise'},
+  {d:'m', id:'md-mongoose', text:'Cape grey mongoose', s:'grey-mongoose'},
+  {d:'m', id:'md-vervet', text:'Vervet monkey', s:'vervet'},
+  {d:'m', id:'md-bokmakierie', text:'Bokmakierie', s:'bokmakierie'},
+  {d:'m', id:'md-buzzard', text:'Jackal buzzard', s:'jackal-buzzard'},
+  {d:'m', id:'md-goshawk', text:'Pale chanting goshawk', s:'goshawk'},
+  {d:'m', id:'md-secretary', text:'Secretary bird', s:'secretary-bird'},
+  {d:'m', id:'md-bustard', text:'Denham’s bustard', s:'bustard'},
+  {d:'m', id:'md-bushbuck', text:'Bushbuck', s:'bushbuck'},
+  {d:'m', id:'md-duiker', text:'Common duiker', s:'duiker'},
+  {d:'m', id:'md-spiral', text:'Kudu bull with spiral horns'},
+  {d:'m', id:'md-herd', text:'Herd of 20+ elephants'},
+  {d:'m', id:'md-mud', text:'Elephant mud or dust bath'},
+  {d:'m', id:'md-running', text:'Animals running'},
+  {d:'m', id:'md-tortroad', text:'Tortoise crossing the road'},
+  {d:'m', id:'md-jackals', text:'Two jackals together'},
+  {d:'m', id:'md-babyzebra', text:'Baby zebra'},
+  {d:'m', id:'md-wading', text:'Elephant wading in water'},
+  {d:'m', id:'md-kingfisher', text:'Any kingfisher'},
+
+  {d:'h', id:'hd-lion', text:'Lion', s:'lion'},
+  {d:'h', id:'hd-hyena', text:'Spotted hyena', s:'hyena'},
+  {d:'h', id:'hd-fox', text:'Bat-eared fox', s:'bat-eared-fox'},
+  {d:'h', id:'hd-steenbok', text:'Steenbok', s:'steenbok'},
+  {d:'h', id:'hd-grysbok', text:'Cape grysbok', s:'grysbok'},
+  {d:'h', id:'hd-crane', text:'Blue crane', s:'blue-crane'},
+  {d:'h', id:'hd-martial', text:'Martial eagle', s:'martial-eagle'},
+  {d:'h', id:'hd-fisheagle', text:'African fish eagle', s:'fish-eagle'},
+  {d:'h', id:'hd-owl', text:'Spotted eagle-owl', s:'spotted-eagle-owl'},
+  {d:'h', id:'hd-hamerkop', text:'Hamerkop', s:'hamerkop'},
+  {d:'h', id:'hd-baboon', text:'Chacma baboon', s:'baboon'},
+  {d:'h', id:'hd-monitor', text:'Rock monitor', s:'rock-monitor'},
+  {d:'h', id:'hd-angulate', text:'Angulate tortoise', s:'angulate'},
+  {d:'h', id:'hd-beetle', text:'Flightless dung beetle', s:'dung-beetle'},
+  {d:'h', id:'hd-ball', text:'Dung beetle rolling a ball'},
+  {d:'h', id:'hd-roar', text:'Hear a lion roar'},
+  {d:'h', id:'hd-buffherd', text:'Buffalo herd of 20+'},
+  {d:'h', id:'hd-spar', text:'Elephant bulls sparring'},
+  {d:'h', id:'hd-catch', text:'Bird of prey with a catch'},
+  {d:'h', id:'hd-lionroad', text:'Lion on the road'},
 ];
-const CHALLENGE = [
-  {id:'h-lion', text:'Lion', s:'lion'},
-  {id:'h-hyena', text:'Spotted hyena', s:'hyena'},
-  {id:'h-secretary', text:'Secretary bird', s:'secretary-bird'},
-  {id:'h-fox', text:'Bat-eared fox', s:'bat-eared-fox'},
-  {id:'h-caracal', text:'Caracal', s:'caracal'},
-  {id:'h-bushbuck', text:'Bushbuck', s:'bushbuck'},
-  {id:'h-steenbok', text:'Steenbok', s:'steenbok'},
-  {id:'h-grysbok', text:'Cape grysbok', s:'grysbok'},
-  {id:'h-duiker', text:'Common duiker', s:'duiker'},
-  {id:'h-beetle', text:'Flightless dung beetle', s:'dung-beetle'},
-  {id:'h-crane', text:'Blue crane', s:'blue-crane'},
-  {id:'h-bustard', text:'Denham’s bustard', s:'bustard'},
-  {id:'h-eagle', text:'Martial eagle', s:'martial-eagle'},
-  {id:'h-porcupine', text:'Porcupine', s:'porcupine'},
-  {id:'h-baboon', text:'Chacma baboon', s:'baboon'},
-  {id:'h-monitor', text:'Rock monitor', s:'rock-monitor'},
-  {id:'h-fisheagle', text:'African fish eagle', s:'fish-eagle'},
-  {id:'h-owl', text:'Spotted eagle-owl', s:'spotted-eagle-owl'},
-  {id:'h-hamerkop', text:'Hamerkop', s:'hamerkop'},
-  {id:'h-angulate', text:'Angulate tortoise', s:'angulate'},
-  {id:'h-springhare', text:'Springhare', s:'springhare'},
-  {id:'h-spar', text:'Elephant bulls sparring', q:'spar'},
-  {id:'h-roar', text:'Hear a lion roar'},
-  {id:'h-ball', text:'Dung beetle rolling a ball'},
-  {id:'h-herd30', text:'Herd of 30+ elephants'},
-  {id:'h-buffherd', text:'Buffalo herd of 20+'},
-  {id:'h-lionroad', text:'Lion on the road'},
-  {id:'h-babyzebra', text:'Baby zebra'},
-  {id:'h-tortroad', text:'Tortoise crossing the road'},
-  {id:'h-catch', text:'Bird of prey with a catch'},
-  {id:'h-jackals', text:'Two jackals together'},
-  {id:'h-swim', text:'Elephant wading deep in water'},
-];
-const SQ = {free:FREE};
-CLASSIC.concat(CHALLENGE).forEach(x => { SQ[x.id] = x; });
+const SQ = {};
+SQUARES.forEach(x => { SQ[x.id] = x; });
+const MIX = {classic:{e:9, m:7}, challenge:{m:9, h:7}};
 const FULL = {classic:1000, challenge:2500};
 const LINES = [
   [0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15],
@@ -723,15 +703,19 @@ const LINES = [
 /* ---------- State ---------- */
 const KEY = 'addo-bingo-v1';
 const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
-function deal(kind){
-  const pool = shuffle((kind==='classic'?CLASSIC:CHALLENGE).map(x=>x.id));
-  const ids = pool.slice(0, kind==='classic'?15:16);
-  if (kind==='classic') ids.splice(Math.floor(Math.random()*16), 0, 'free');
-  return {ids, marks:{}};
+// Deals a 4×4 card; `avoid` keeps the other card's squares off this one.
+function deal(kind, avoid){
+  const skip = new Set(avoid || []);
+  const ids = [];
+  Object.entries(MIX[kind]).forEach(([d, n]) => {
+    ids.push(...shuffle(SQUARES.filter(x => x.d === d && !skip.has(x.id)).map(x => x.id)).slice(0, n));
+  });
+  return {ids: shuffle(ids), marks:{}};
 }
 function fresh(){
-  return {name:'', introDone:false, sightings:{}, quests:{}, sticks:[],
-    cards:{classic:deal('classic'), challenge:deal('challenge')},
+  const classic = deal('classic');
+  return {name:'', introDone:false, sightings:{}, sticks:[],
+    cards:{classic, challenge:deal('challenge', classic.ids)},
     seen:{sets:{}, bingo:{classic:0, challenge:0}}, theme:'auto', bingoView:'classic', sort:'tiers', offlineToasted:false};
 }
 function validCard(c){ return c && Array.isArray(c.ids) && c.ids.length===16 && c.ids.every(id=>SQ[id]) && c.marks && typeof c.marks==='object'; }
@@ -741,14 +725,20 @@ function loadState(){
   try { s = JSON.parse(localStorage.getItem(KEY)); } catch(e) {}
   if (!s || typeof s!=='object') return f;
   const seen = s.seen || {};
-  return Object.assign(f, s, {
-    sightings: s.sightings || {}, quests: s.quests || {}, sticks: Array.isArray(s.sticks) ? s.sticks : [],
-    cards: {
-      classic: validCard(s.cards && s.cards.classic) ? s.cards.classic : f.cards.classic,
-      challenge: validCard(s.cards && s.cards.challenge) ? s.cards.challenge : f.cards.challenge,
-    },
-    seen: {sets: seen.sets || {}, bingo: Object.assign({classic:0, challenge:0}, seen.bingo || {})},
+  const bingoSeen = Object.assign({classic:0, challenge:0}, seen.bingo || {});
+  // Cards from an older version of the game get re-dealt.
+  const okC = validCard(s.cards && s.cards.classic), okH = validCard(s.cards && s.cards.challenge);
+  const classic = okC ? s.cards.classic : (okH ? deal('classic', s.cards.challenge.ids) : f.cards.classic);
+  const challenge = okH ? s.cards.challenge : deal('challenge', classic.ids);
+  if (!okC) bingoSeen.classic = 0;
+  if (!okH) bingoSeen.challenge = 0;
+  const out = Object.assign(f, s, {
+    sightings: s.sightings || {}, sticks: Array.isArray(s.sticks) ? s.sticks : [],
+    cards: {classic, challenge},
+    seen: {sets: seen.sets || {}, bingo: bingoSeen},
   });
+  delete out.quests;
+  return out;
 }
 let S = loadState();
 let saveWarned = false;
@@ -769,7 +759,7 @@ function setState(set){
   return {have, need: set.need, done: have >= set.need};
 }
 function squareDone(item, card){
-  return !!(item.free || (item.s && S.sightings[item.s]) || (item.q && S.quests[item.q]) || card.marks[item.id]);
+  return !!((item.s && S.sightings[item.s]) || card.marks[item.id]);
 }
 function bingoState(kind){
   const card = S.cards[kind];
@@ -783,11 +773,10 @@ function bingoState(kind){
 }
 function totals(){
   let sight = 0; for (const id in S.sightings) if (SP[id]) sight += sightingPts(id, S.sightings[id]);
-  let quest = 0; QUESTS.forEach(([id,,p]) => { if (S.quests[id]) quest += p; });
   let sets = 0; SETS.forEach(st => { if (setState(st).done) sets += st.bonus; });
   const bc = bingoState('classic').pts, bh = bingoState('challenge').pts;
   const sticks = -10 * S.sticks.length;
-  return {sight, quest, sets, bc, bh, sticks, total: sight + quest + sets + bc + bh + sticks};
+  return {sight, sets, bc, bh, sticks, total: sight + sets + bc + bh + sticks};
 }
 
 /* ---------- Helpers ---------- */
@@ -822,20 +811,6 @@ function rowHTML(sp){
     : `<span class="meta">${meter('Rarity', sp.r, 6, 'r')}${meter('Hype', sp.h, 5, 'h')}</span>`;
   return `<li><button class="row${sg?' got':''}" data-s="${sp.id}"><span class="row-main"><span class="row-name">${sp.name}</span>${meta}</span><span class="pts${stampId===sp.id?' stamp-in':''}">${fmt(pts)}</span></button></li>`;
 }
-function elephantPanel(){
-  const sg = S.sightings.elephant;
-  const pts = sg ? sightingPts('elephant', sg) : SP.elephant.base;
-  const chips = QUESTS.map(([id,label,p]) =>
-    `<button class="chip" data-q="${id}" aria-pressed="${!!S.quests[id]}"><span>${label}</span><b>+${p}</b></button>`).join('');
-  return `<section class="ele">
-    <button class="ele-row${sg?' got':''}" data-s="elephant">
-      <span><span class="ele-name disp">African elephant</span>
-      <span class="ele-sub">${sg ? 'Spotted ' + when(sg.t) + modText(sg) : 'There are hundreds here, so elephant moments score extra.'}</span></span>
-      <span class="pts${stampId==='elephant'?' stamp-in':''}">${fmt(pts)}</span>
-    </button>
-    <div class="quests">${chips}</div>
-  </section>`;
-}
 let group = 'all';
 function renderSpot(){
   const q = $('#search').value.trim().toLowerCase();
@@ -846,8 +821,7 @@ function renderSpot(){
   $('#progress').textContent = `${count} of ${inGroup.length} ${G.noun[inGroup.length === 1 ? 0 : 1]} spotted`;
   let html = '';
   let shown = 0;
-  if (match(SP.elephant)) { html += elephantPanel(); shown++; }
-  const pool = SPECIES.map(a => SP[a[0]]).filter(sp => sp.id !== 'elephant' && match(sp));
+  const pool = SPECIES.map(a => SP[a[0]]).filter(match);
   const byName = (a, b) => a.name.localeCompare(b.name, 'en');
   shown += pool.length;
   if (S.sort === 'az') {
@@ -882,19 +856,19 @@ function renderBingo(){
   const status = b.full ? `Full card! ${fmt(b.pts)} points`
     : n >= 2 ? `${n} lines: 250 points` : n === 1 ? 'Bingo! 100 points' : 'No lines yet';
   const help = b.full ? 'Nothing left to tick on this card.'
-    : n === 0 ? (k === 'classic' ? 'Doable in a day. One line scores 100.' : 'For sharp eyes. One line scores 100.')
+    : n === 0 ? (k === 'classic' ? 'Everyday sightings plus a few trickier ones. One line scores 100.' : 'Trickier sightings plus a few proper hard ones. One line scores 100.')
     : n === 1 ? 'A second line takes it to 250.'
     : `Fill the whole card for a ${fmt(FULL[k])} point bonus.`;
   const squares = card.ids.map((id, i) => {
     const it = SQ[id], done = b.done[i];
     const cls = 'sq' + (done ? ' done' : '') + (inLine.has(i) ? ' inline' : '') + (stampSq === id ? ' stamp-sq' : '');
-    return `<button class="${cls}" data-sq="${id}" aria-pressed="${done}"><span class="sq-t">${esc(it.text)}${it.free ? '<small>Free, it’s Addo</small>' : ''}</span></button>`;
+    return `<button class="${cls}" data-sq="${id}" aria-pressed="${done}"><span class="sq-t">${esc(it.text)}</span></button>`;
   }).join('');
   $('#bingo-body').innerHTML = `
     <p class="bingo-status disp">${status}</p>
     <p class="bingo-help">${help}</p>
     <div class="grid">${squares}</div>
-    <p class="note">Animal and elephant squares tick themselves when you log them.</p>
+    <p class="note">Animal squares tick themselves when you log the animal. Tap the others when they happen.</p>
     <button class="link-btn" data-act="deal">Deal a new ${k === 'classic' ? 'Classic' : 'Challenge'} card</button>`;
   document.querySelectorAll('[data-view]').forEach(el => el.setAttribute('aria-pressed', el.dataset.view === k));
 }
@@ -907,12 +881,10 @@ function renderScore(T){
   }).join('');
   const row = (label, v, sub) => `<li><span class="label">${label}${sub ? `<small>${sub}</small>` : ''}</span><span class="v${v===0?' off':''}">${fmt(v)}</span></li>`;
   const spotted = Object.keys(S.sightings).filter(id => SP[id]).length;
-  const ticked = Object.keys(S.quests).filter(id => QP[id]).length;
   $('#score-body').innerHTML = `
     <div class="score-hero"><h2 class="disp">${S.name ? esc(S.name) + '’s total' : 'Your total'}</h2><span class="disp num">${fmt(T.total)}</span></div>
     <ul class="rows">
       ${row('Animals', T.sight, `${spotted} of ${SPECIES.length} spotted`)}
-      ${row('Elephant moments', T.quest, `${ticked} of ${QUESTS.length} ticked`)}
       ${row('Sets', T.sets)}
       ${row('Classic bingo', T.bc)}
       ${row('Challenge bingo', T.bh)}
@@ -925,7 +897,6 @@ function renderScore(T){
 
   const log = [];
   for (const id in S.sightings) if (SP[id]) log.push({t:S.sightings[id].t, title:SP[id].name, sub:modText(S.sightings[id]).replace(/^, /,''), pts:sightingPts(id, S.sightings[id])});
-  for (const id in S.quests) if (QP[id]) log.push({t:S.quests[id], title:'Elephant: ' + QP[id].label.toLowerCase(), sub:'', pts:QP[id].p});
   S.sticks.forEach(t => log.push({t, title:'Stick-o-saurus', sub:'', pts:-10}));
   log.sort((a,b) => b.t - a.t);
   $('#log-body').innerHTML = `<h2 class="sec-h disp">Your log</h2>` + (log.length
@@ -1012,19 +983,9 @@ function removeSighting(){
   closeSheet(); changed();
   toast(`${sp.name} removed`);
 }
-function toggleQuest(id){
-  if (S.quests[id]) { delete S.quests[id]; }
-  else {
-    S.quests[id] = Date.now(); buzz();
-    if (!S.sightings.elephant){ S.sightings.elephant = {t: Date.now()}; stampId = 'elephant'; toast('Elephant logged too'); }
-  }
-  changed();
-}
 function tapSquare(id){
   const it = SQ[id];
-  if (it.free) { toast('Free square. Everyone sees an elephant at Addo.'); return; }
   if (it.s) { openSheet(it.s); return; }
-  if (it.q) { stampSq = id; toggleQuest(it.q); return; }
   const card = S.cards[S.bingoView];
   if (card.marks[id]) delete card.marks[id]; else { card.marks[id] = Date.now(); stampSq = id; buzz(); }
   changed();
@@ -1036,11 +997,10 @@ function showTab(name){
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-s],[data-q],[data-sq],[data-tab],[data-mod],[data-close],[data-view],[data-theme-set],[data-group],[data-act]');
+  const t = e.target.closest('[data-s],[data-sq],[data-tab],[data-mod],[data-close],[data-view],[data-theme-set],[data-group],[data-act]');
   if (!t) return;
   const d = t.dataset;
   if (d.s) return openSheet(d.s);
-  if (d.q) return toggleQuest(d.q);
   if (d.sq) return tapSquare(d.sq);
   if (d.tab) return showTab(d.tab);
   if (d.mod) { draft[d.mod] = !draft[d.mod]; renderSheet(); return; }
@@ -1054,7 +1014,7 @@ document.addEventListener('click', e => {
     case 'deal': {
       const k = S.bingoView, name = k === 'classic' ? 'Classic' : 'Challenge';
       if (!confirm(`Deal a new ${name} card? Squares you ticked by hand on this card are cleared. Your animals stay logged.`)) return;
-      S.cards[k] = deal(k); S.seen.bingo[k] = 0; changed(); toast(`New ${name} card dealt`); return;
+      S.cards[k] = deal(k, S.cards[k === 'classic' ? 'challenge' : 'classic'].ids); S.seen.bingo[k] = 0; changed(); toast(`New ${name} card dealt`); return;
     }
     case 'stick': S.sticks.push(Date.now()); buzz(); changed(); toast('Stick-o-saurus logged: −10'); return;
     case 'unstick': S.sticks.pop(); changed(); return;
