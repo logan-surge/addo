@@ -1,5 +1,6 @@
 // Addo Safari Bingo: caches the whole game so it runs with no signal.
-const CACHE = 'addo-bingo-v4';
+const CACHE = 'addo-bingo-v5';
+const PHOTOS = 'addo-photos-v1';   // filled by the game itself; kept across updates
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -9,15 +10,28 @@ self.addEventListener('install', e => {
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE && k !== PHOTOS).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
-// Serve from the cache straight away, and refresh the cache in the background when there is signal.
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  if (req.method !== 'GET') return;
+  const url = new URL(req.url);
+
+  // Animal photos: use the saved copy, so they show with no signal.
+  if (url.hostname === 'upload.wikimedia.org') {
+    e.respondWith(
+      caches.open(PHOTOS)
+        .then(c => c.match(req.url, {ignoreVary: true}))
+        .then(hit => hit || fetch(req))
+    );
+    return;
+  }
+  if (url.origin !== location.origin) return;
+
+  // The game itself: serve from the cache straight away, refresh it in the background when there is signal.
   e.respondWith(
     caches.open(CACHE).then(async cache => {
       const hit = await cache.match(req, {ignoreSearch: true}) ||

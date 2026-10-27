@@ -104,7 +104,14 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
 .list{list-style:none;margin:0;padding:0}
 .list li+li{border-top:1px solid var(--line)}
 .row{display:flex;width:100%;align-items:center;justify-content:space-between;gap:12px;padding:11px 2px;min-height:58px}
-.row-main{min-width:0}
+.row-main{min-width:0;flex:1}
+.thumb{position:relative;flex:0 0 52px;width:52px;height:52px;border-radius:11px;overflow:hidden;background:var(--surface-2);display:grid;place-items:center}
+.thumb b{font-family:var(--display);font-stretch:condensed;font-weight:800;font-size:22px;color:var(--muted);opacity:.55}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;animation:fade .35s ease-out}
+.sheet-photo{margin:0 0 14px}
+.sheet-photo img{display:block;width:100%;height:180px;object-fit:cover;border-radius:14px;background:var(--surface-2)}
+.sheet-photo figcaption{font-size:12px;color:var(--muted);margin-top:5px}
+.sheet-photo a{color:inherit}
 .row-name{display:block;font-size:17px;font-weight:600;line-height:1.25}
 .meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px;font-size:12px;color:var(--muted);align-items:center}
 .got-meta{color:var(--spek);font-weight:600;font-size:13px}
@@ -290,6 +297,15 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
           <button data-theme-set="dark">Night drive</button>
         </div>
       </div>
+      <div>
+        <span class="field"><span>Photos</span></span>
+        <div class="seg" role="group" aria-label="Photo downloads">
+          <button data-photos="on">Download</button>
+          <button data-photos="off">Don’t download</button>
+        </div>
+        <p class="sec-p" id="photo-status" style="margin-top:8px"></p>
+        <button class="secondary" data-act="photos-now" id="photos-now" hidden>Get photos now</button>
+      </div>
       <button class="link-btn danger" data-act="reset">Reset everything on this phone</button>
     </div>
   </section>
@@ -328,6 +344,10 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
     <h2 class="disp">House rules</h2>
     <p>Everyone in the car can log the same animal, but only whoever genuinely saw it first takes the ×1.5. A Stick-o-saurus costs 10 points, and the car votes on it. Disputes go to the driver.</p>
 
+    <h2 class="disp">Photos</h2>
+    <p>Photos come from Wikipedia and Wikimedia Commons, where photographers share them under free licences. Open any animal and tap “Photo credit and licence” under its photo to see who took it. A few entries, like Any bat or Any gecko, show one example species.</p>
+    <p>The game downloads photos in the background when you have a decent connection and skips them on a slow one, so opening it never waits on them. All of them together are roughly 5 to 8 MB. You can turn downloads off, or start them yourself, in Settings on the Score tab.</p>
+
     <h2 class="disp">Using it with no signal</h2>
     <p class="status" id="offline-status">Checking offline setup…</p>
     <p><strong>iPhone:</strong> open the link in Safari, tap Share, then Add to Home Screen.<br>
@@ -358,6 +378,7 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
   <div class="backdrop" data-close></div>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
     <div class="grabber" aria-hidden="true"></div>
+    <figure class="sheet-photo" id="sheet-photo" hidden></figure>
     <h3 class="disp" id="sheet-title"></h3>
     <p class="formula" id="sheet-formula"></p>
     <div class="mods" id="sheet-mods"></div>
@@ -716,7 +737,7 @@ function fresh(){
   const classic = deal('classic');
   return {name:'', introDone:false, sightings:{}, sticks:[],
     cards:{classic, challenge:deal('challenge', classic.ids)},
-    seen:{sets:{}, bingo:{classic:0, challenge:0}}, theme:'auto', bingoView:'classic', sort:'tiers', offlineToasted:false};
+    seen:{sets:{}, bingo:{classic:0, challenge:0}}, theme:'auto', bingoView:'classic', sort:'tiers', photos:'on', offlineToasted:false};
 }
 function validCard(c){ return c && Array.isArray(c.ids) && c.ids.length===16 && c.ids.every(id=>SQ[id]) && c.marks && typeof c.marks==='object'; }
 function loadState(){
@@ -796,6 +817,143 @@ function nextToast(){
   setTimeout(() => { el.classList.remove('show'); setTimeout(nextToast, 260); }, 2600);
 }
 
+/* ---------- Photos ---------- */
+// Wikipedia article for each animal's photo. Arrays are tried in order. Unlisted ids use the animal's name.
+const PHOTO_TITLES = {
+  'elephant':'African bush elephant', 'kudu':'Greater kudu', 'warthog':'Common warthog', 'eland':'Common eland',
+  'buffalo':'African buffalo', 'bushbuck':['Bushbuck','Cape bushbuck'], 'any-mouse':['Four-striped grass mouse','Rhabdomys pumilio'],
+  'rock-hyrax':'Rock hyrax', 'any-bat':'Bat', 'water-mongoose':'Marsh mongoose', 'large-grey-mongoose':'Egyptian mongoose',
+  'red-rock-hare':['Smith\u2019s red rock hare','Pronolagus rupestris'], 'large-genet':['Cape genet','Genetta tigrina'],
+  'small-genet':'Common genet', 'springhare':'South African springhare', 'porcupine':'Cape porcupine',
+  'elephant-shrew':['Round-eared elephant shrew','Macroscelides proboscideus'], 'hippo':'Hippopotamus',
+  'any-mole':'Golden mole', 'otter':'African clawless otter', 'leopard':'African leopard', 'black-rhino':'Black rhinoceros',
+  'glossy-starling':'Cape starling', 'hadeda':'Hadada ibis', 'ostrich':'Common ostrich', 'steppe-buzzard':'Common buzzard',
+  'coucal':'Burchell\u2019s coucal', 'any-woodpecker':'Cardinal woodpecker', 'bustard':'Denham\u2019s bustard',
+  'secretary-bird':'Secretarybird', 'grey-winged-francolin':['Grey-winged francolin','Scleroptila afra'],
+  'barrows-korhaan':['Barrow\u2019s korhaan','White-bellied bustard'], 'barn-owl':'Western barn owl',
+  'ludwigs-bustard':'Ludwig\u2019s bustard', 'verreaux-eagle':'Verreaux\u2019s eagle', 'verreaux-eagle-owl':'Verreaux\u2019s eagle-owl',
+  'flamingo':'Greater flamingo', 'crowned-eagle':'Crowned eagle', 'terrapin':['Helmeted terrapin','Pelomedusa subrufa'],
+  'any-gecko':'Gecko', 'any-skink':'Skink', 'agama':['Southern rock agama','Agama atra'],
+  'girdled-lizard':['Cape girdled lizard','Cordylus cordylus'], 'other-snake':'Snake', 'water-monitor':'Nile monitor',
+  'night-adder':['Rhombic night adder','Causus rhombeatus'], 'egg-eater':['Rhombic egg-eater','Dasypeltis scabra'],
+  'tent-tortoise':['Tent tortoise','Psammobates tentorius'], 'parrot-beaked':['Parrot-beaked tortoise','Homopus areolatus'],
+  'chameleon':['Bradypodion ventrale','Bradypodion'], 'berg-adder':['Berg adder','Bitis atropos'],
+  'horned-adder':['Horned adder','Bitis caudalis'], 'albany-adder':['Albany adder','Bitis albanica'],
+  'dung-beetle':['Circellium bacchus','Circellium','Flightless dung beetle'],
+};
+// Entries that cover a group of animals; their photo shows one example.
+const PHOTO_EXAMPLE = new Set(['any-mouse','any-bat','any-mole','any-woodpecker','flamingo','any-gecko','any-skink','other-snake','chameleon']);
+
+const PHOTO_KEY = 'addo-photos-v1';
+const PHOTO_CACHE = 'addo-photos-v1';
+let P = {};
+try { P = JSON.parse(localStorage.getItem(PHOTO_KEY)) || {}; } catch(e) {}
+const savePhotos = () => { try { localStorage.setItem(PHOTO_KEY, JSON.stringify(P)); } catch(e) {} };
+const photoOf = id => (P[id] && P[id].src) ? P[id] : null;
+const imgTag = src => `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" crossorigin="anonymous" onerror="this.remove()">`;
+function thumbHTML(sp){
+  const ph = photoOf(sp.id);
+  return `<span class="thumb" data-thumb="${sp.id}" aria-hidden="true"><b>${esc(sp.name.charAt(0))}</b>${ph ? imgTag(ph.src) : ''}</span>`;
+}
+function showPhoto(id){
+  const ph = photoOf(id); if (!ph) return;
+  document.querySelectorAll(`[data-thumb="${id}"]`).forEach(el => { if (!el.querySelector('img')) el.insertAdjacentHTML('beforeend', imgTag(ph.src)); });
+  if (sheetId === id) renderSheetPhoto();
+}
+function renderSheetPhoto(){
+  const ph = photoOf(sheetId), box = $('#sheet-photo');
+  if (!ph) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+  box.innerHTML = `<img src="${esc(ph.src)}" alt="Photo of ${esc(SP[sheetId].name)}" decoding="async" crossorigin="anonymous" onerror="this.parentNode.hidden=true">
+    <figcaption>${PHOTO_EXAMPLE.has(sheetId) ? 'Example photo. ' : ''}<a href="${esc(ph.credit)}" target="_blank" rel="noopener">Photo credit and licence</a></figcaption>`;
+}
+// Turns an upload.wikimedia.org image address into the page that names its photographer and licence.
+function creditURL(src){
+  try {
+    const parts = new URL(src).pathname.split('/');
+    const project = parts[2] === 'en' ? 'https://en.wikipedia.org' : 'https://commons.wikimedia.org';
+    const t = parts.indexOf('thumb');
+    const file = t > -1 ? parts[t + 3] : parts[parts.length - 1];
+    return `${project}/wiki/File:${file}`;
+  } catch(e) { return 'https://commons.wikimedia.org'; }
+}
+function slowConnection(){
+  const c = navigator.connection;
+  if (!c) return false;
+  return !!(c.saveData || ['slow-2g','2g','3g'].includes(c.effectiveType));
+}
+async function fetchTimed(url, ms){
+  const ctl = ('AbortController' in window) ? new AbortController() : null;
+  const timer = ctl ? setTimeout(() => ctl.abort(), ms) : null;
+  try { return await fetch(url, {mode:'cors', credentials:'omit', signal: ctl ? ctl.signal : undefined}); }
+  catch(e) { return null; }
+  finally { if (timer) clearTimeout(timer); }
+}
+// Returns true when this animal is settled (photo saved, or no photo exists), false on a network problem.
+async function getPhoto(id, cache){
+  const titles = [].concat(PHOTO_TITLES[id] || SP[id].name);
+  for (const title of titles){
+    const r = await fetchTimed('https://en.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(title.replace(/ /g, '_')), 8000);
+    if (!r) return false;
+    if (r.status === 404) continue;
+    if (!r.ok) return false;
+    let j; try { j = await r.json(); } catch(e) { return false; }
+    const src = j && j.thumbnail && j.thumbnail.source;
+    if (!src) continue;
+    const img = await fetchTimed(src, 15000);
+    if (!img || !img.ok) return false;
+    await cache.put(src, img);
+    P[id] = {src, credit: creditURL((j.originalimage && j.originalimage.source) || src)};
+    savePhotos(); showPhoto(id);
+    return true;
+  }
+  P[id] = {none: true}; savePhotos();
+  return true;
+}
+let photoRun = false;
+function photoCounts(){
+  let saved = 0, none = 0;
+  SPECIES.forEach(([id]) => { if (photoOf(id)) saved++; else if (P[id] && P[id].none) none++; });
+  return {saved, none, left: SPECIES.length - saved - none};
+}
+function updatePhotoStatus(){
+  const el = $('#photo-status'); if (!el) return;
+  const c = photoCounts();
+  let msg;
+  if (photoRun) msg = `Downloading photos in the background: ${c.saved} of ${SPECIES.length} saved.`;
+  else if (!c.left) msg = `${c.saved} photos saved on this phone` + (c.none ? `. ${c.none} animal${c.none === 1 ? ' has' : 's have'} no photo.` : '.');
+  else if (S.photos === 'off') msg = `Photo downloads are off. ${c.saved} of ${SPECIES.length} saved.`;
+  else msg = `${c.saved} of ${SPECIES.length} photos saved. The rest download next time there’s a good connection.`;
+  el.textContent = msg;
+  $('#photos-now').hidden = photoRun || !c.left;
+  document.querySelectorAll('[data-photos]').forEach(b => b.setAttribute('aria-pressed', b.dataset.photos === S.photos));
+}
+async function runPhotos(force){
+  if (photoRun || !('caches' in window) || !navigator.onLine) { updatePhotoStatus(); return; }
+  if (!force && (S.photos === 'off' || slowConnection())) { updatePhotoStatus(); return; }
+  const todo = SPECIES.map(a => a[0]).filter(id => !P[id]);
+  if (!todo.length) { updatePhotoStatus(); return; }
+  photoRun = true; updatePhotoStatus();
+  let fails = 0;
+  try {
+    const cache = await caches.open(PHOTO_CACHE);
+    const worker = async () => {
+      while (todo.length && fails < 3 && navigator.onLine && (force || S.photos !== 'off')) {
+        let ok = false;
+        try { ok = await getPhoto(todo.shift(), cache); } catch(e) { ok = false; }
+        fails = ok ? 0 : fails + 1;
+        updatePhotoStatus();
+      }
+    };
+    await Promise.all([worker(), worker()]);
+  } catch(e) {}
+  photoRun = false; updatePhotoStatus();
+}
+function schedulePhotos(){
+  const idle = window.requestIdleCallback || (f => setTimeout(f, 1));
+  setTimeout(() => idle(() => runPhotos(false)), 3000);
+}
+
 /* ---------- Rendering ---------- */
 let stampId = null, stampSq = null, lastTotal = null;
 
@@ -809,7 +967,7 @@ function rowHTML(sp){
   const meta = sg
     ? `<span class="meta got-meta">Spotted ${when(sg.t)}${modText(sg)}</span>`
     : `<span class="meta">${meter('Rarity', sp.r, 6, 'r')}${meter('Hype', sp.h, 5, 'h')}</span>`;
-  return `<li><button class="row${sg?' got':''}" data-s="${sp.id}"><span class="row-main"><span class="row-name">${sp.name}</span>${meta}</span><span class="pts${stampId===sp.id?' stamp-in':''}">${fmt(pts)}</span></button></li>`;
+  return `<li><button class="row${sg?' got':''}" data-s="${sp.id}">${thumbHTML(sp)}<span class="row-main"><span class="row-name">${sp.name}</span>${meta}</span><span class="pts${stampId===sp.id?' stamp-in':''}">${fmt(pts)}</span></button></li>`;
 }
 let group = 'all';
 function renderSpot(){
@@ -961,6 +1119,7 @@ function renderSheet(){
   $('#sheet-pts').textContent = fmt(Math.round(sp.base * multOf(draft)));
   $('#sheet-log').textContent = logged ? 'Update sighting' : 'Log sighting';
   $('#sheet-remove').hidden = !logged;
+  renderSheetPhoto();
 }
 function closeSheet(){
   $('#sheet').hidden = true; document.body.style.overflow = ''; sheetId = null;
@@ -997,7 +1156,7 @@ function showTab(name){
 }
 
 document.addEventListener('click', e => {
-  const t = e.target.closest('[data-s],[data-sq],[data-tab],[data-mod],[data-close],[data-view],[data-theme-set],[data-group],[data-act]');
+  const t = e.target.closest('[data-s],[data-sq],[data-photos],[data-tab],[data-mod],[data-close],[data-view],[data-theme-set],[data-group],[data-act]');
   if (!t) return;
   const d = t.dataset;
   if (d.s) return openSheet(d.s);
@@ -1007,9 +1166,11 @@ document.addEventListener('click', e => {
   if ('close' in d) return closeSheet();
   if (d.view) { S.bingoView = d.view; save(); renderBingo(); return; }
   if (d.themeSet) { S.theme = d.themeSet; save(); applyTheme(); return; }
+  if (d.photos) { S.photos = d.photos; save(); updatePhotoStatus(); if (d.photos === 'on') runPhotos(false); return; }
   if (d.group) { group = d.group; renderSpot(); window.scrollTo(0, 0); return; }
   switch (d.act){
     case 'log': return logSighting();
+    case 'photos-now': runPhotos(true); return;
     case 'remove': return removeSighting();
     case 'deal': {
       const k = S.bingoView, name = k === 'classic' ? 'Classic' : 'Challenge';
@@ -1064,6 +1225,10 @@ if ('ResizeObserver' in window) new ResizeObserver(setH).observe(hdr); else wind
 
 applyTheme();
 renderAll();
+if (S.photos !== 'off' && S.photos !== 'on') S.photos = 'on';
+updatePhotoStatus();
+schedulePhotos();
+window.addEventListener('online', schedulePhotos);
 })();
 </script>
 </body>
