@@ -1,10 +1,13 @@
 // Addo Safari Bingo: caches the whole game so it runs with no signal.
-const CACHE = 'addo-bingo-v5';
+const CACHE = 'addo-bingo-v7';
 const PHOTOS = 'addo-photos-v1';   // filled by the game itself; kept across updates
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  // cache: 'reload' skips the browser's own short-term cache, so an update always saves the newest files.
+  e.waitUntil(caches.open(CACHE)
+    .then(c => c.addAll(ASSETS.map(u => new Request(u, {cache: 'reload'}))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
@@ -36,7 +39,7 @@ self.addEventListener('fetch', e => {
     caches.open(CACHE).then(async cache => {
       const hit = await cache.match(req, {ignoreSearch: true}) ||
                   (req.mode === 'navigate' ? await cache.match('./index.html') : undefined);
-      const fresh = fetch(req).then(res => {
+      const fresh = fetch(req, {cache: 'no-cache'}).then(res => {
         if (res && res.ok) cache.put(req, res.clone());
         return res;
       }).catch(() => hit);

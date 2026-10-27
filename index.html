@@ -172,6 +172,18 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
 .done-mark{color:var(--spek)}
 .settings{display:grid;gap:16px;margin-top:10px}
 .log-t{font-size:13px;color:var(--muted);display:block}
+.score-hero h2.disp{font-size:28px}
+.lb-refresh{width:auto;padding:6px 2px;font-size:15px}
+.lb-status{margin:6px 2px 4px;font-size:14px;color:var(--muted)}
+.board{list-style:none;margin:4px 0 26px;padding:0}
+.board li{display:flex;align-items:center;gap:12px;padding:10px 2px;border-bottom:1px solid var(--line)}
+.board .rank{flex:0 0 32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:18px;background:var(--surface-2)}
+.board li:first-child .rank{background:var(--ochre);color:#271B00}
+.board .label{flex:1;min-width:0;font-weight:600}
+.board .label small{display:block;font-weight:400;font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.board .v{font-family:var(--display);font-stretch:condensed;font-weight:800;font-size:22px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.board .v small{display:block;font-family:var(--body);font-weight:400;font-size:12px;color:var(--muted)}
+.board li.me{background:var(--surface);border-radius:12px;padding-left:8px;padding-right:10px;border-bottom-color:transparent}
 
 /* Rules */
 .prose h2{font-size:26px;margin:28px 0 6px;line-height:1}
@@ -274,6 +286,7 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
 
   <!-- SCORE -->
   <section class="panel" id="tab-score" aria-label="Score" hidden>
+    <div id="board-body"></div>
     <div id="score-body"></div>
 
     <h2 class="sec-h disp">Stick-o-saurus</h2>
@@ -347,6 +360,9 @@ main{max-width:640px;margin:0 auto;padding:16px 16px calc(92px + env(safe-area-i
     <h2 class="disp">Photos</h2>
     <p>Photos come from Wikipedia and Wikimedia Commons, where photographers share them under free licences. Open any animal and tap “Photo credit and licence” under its photo to see who took it. A few entries, like Any bat or Any gecko, show one example species.</p>
     <p>The game downloads photos in the background when you have a decent connection and skips them on a slow one, so opening it never waits on them. All of them together are roughly 5 to 8 MB. You can turn downloads off, or start them yourself, in Settings on the Score tab.</p>
+
+    <h2 class="disp">Leaderboard</h2>
+    <p>Your score uploads to the group leaderboard on the Score tab whenever you have signal, and you get everyone else’s back. With no signal it shows the last scores it saw, and catches up when you’re back in range. Scores are kept in the trip’s Google Sheet. Each phone counts as one player, and resetting the game keeps your spot.</p>
 
     <h2 class="disp">Using it with no signal</h2>
     <p class="status" id="offline-status">Checking offline setup…</p>
@@ -737,8 +753,9 @@ function fresh(){
   const classic = deal('classic');
   return {name:'', introDone:false, sightings:{}, sticks:[],
     cards:{classic, challenge:deal('challenge', classic.ids)},
-    seen:{sets:{}, bingo:{classic:0, challenge:0}}, theme:'auto', bingoView:'classic', sort:'tiers', photos:'on', offlineToasted:false};
+    seen:{sets:{}, bingo:{classic:0, challenge:0}}, theme:'auto', bingoView:'classic', sort:'tiers', photos:'on', offlineToasted:false, pid:newId()};
 }
+function newId(){ return 'p-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
 function validCard(c){ return c && Array.isArray(c.ids) && c.ids.length===16 && c.ids.every(id=>SQ[id]) && c.marks && typeof c.marks==='object'; }
 function loadState(){
   const f = fresh();
@@ -759,6 +776,7 @@ function loadState(){
     seen: {sets: seen.sets || {}, bingo: bingoSeen},
   });
   delete out.quests;
+  if (!out.pid || typeof out.pid !== 'string') out.pid = newId();
   return out;
 }
 let S = loadState();
@@ -954,6 +972,76 @@ function schedulePhotos(){
   setTimeout(() => idle(() => runPhotos(false)), 3000);
 }
 
+/* ---------- Leaderboard ---------- */
+// Google Sheet web app that stores everyone's totals (see leaderboard-apps-script.js).
+const LB_URL = 'https://script.google.com/macros/s/AKfycbxvk5RTrSHxhnaFGmO0dZDdZ-tuE9WFUhKb4gvUHWzRjzoYpRIXZydU3tJrZd8s-KNnyA/exec';
+const LB_KEY = 'addo-board-v1';
+let B = {players: [], at: 0};
+try { const b = JSON.parse(localStorage.getItem(LB_KEY)); if (b && Array.isArray(b.players)) B = b; } catch(e) {}
+let lbBusy = false, lbError = false, lbTimer = null;
+
+function ago(t){
+  if (!t || isNaN(t)) return '';
+  const m = Math.round((Date.now() - t) / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m} min ago`;
+  const h = Math.round(m / 60);
+  return h < 24 ? `${h} h ago` : when(t);
+}
+function myEntry(){
+  let best = '', bestPts = -1;
+  for (const id in S.sightings) if (SP[id]) {
+    const p = sightingPts(id, S.sightings[id]);
+    if (p > bestPts) { bestPts = p; best = SP[id].name; }
+  }
+  return {id: S.pid, name: S.name || 'Spotter', total: totals().total,
+    spotted: Object.keys(S.sightings).filter(id => SP[id]).length, best};
+}
+async function syncBoard(){
+  clearTimeout(lbTimer);
+  if (!LB_URL || lbBusy || !navigator.onLine) { renderBoard(); return; }
+  lbBusy = true; renderBoard();
+  const ctl = ('AbortController' in window) ? new AbortController() : null;
+  const timer = ctl ? setTimeout(() => ctl.abort(), 15000) : null;
+  try {
+    // Plain-text body keeps this a "simple" request, which Google's web apps accept from any site.
+    const r = await fetch(LB_URL, {method:'POST', body: JSON.stringify(myEntry()), credentials:'omit', redirect:'follow',
+      signal: ctl ? ctl.signal : undefined});
+    const j = await r.json();
+    if (!j || !j.ok || !Array.isArray(j.players)) throw new Error('bad reply');
+    B = {players: j.players, at: Date.now()};
+    try { localStorage.setItem(LB_KEY, JSON.stringify(B)); } catch(e) {}
+    lbError = false;
+  } catch(e) { lbError = true; }
+  finally { if (timer) clearTimeout(timer); lbBusy = false; renderBoard(); }
+}
+function queueSync(ms){ clearTimeout(lbTimer); lbTimer = setTimeout(syncBoard, ms == null ? 5000 : ms); }
+function renderBoard(){
+  const el = $('#board-body'); if (!el) return;
+  const me = myEntry();
+  const list = B.players.filter(p => p && p.id && p.id !== me.id)
+    .concat([Object.assign({}, me, {me: true})])
+    .sort((a, b) => (b.total - a.total) || String(a.name).localeCompare(String(b.name)));
+  let status;
+  if (lbBusy) status = 'Updating…';
+  else if (!navigator.onLine) status = B.at ? `No signal. Showing scores from ${ago(B.at)}.` : 'No signal yet. Friends’ scores appear once you have a connection.';
+  else if (lbError) status = B.at ? `Couldn’t reach the leaderboard. Showing scores from ${ago(B.at)}.` : 'Couldn’t reach the leaderboard. It will try again soon.';
+  else status = B.at ? `Updated ${ago(B.at)}.` : 'Not updated yet.';
+  const rows = list.map((p, i) => {
+    const sub = `${p.spotted || 0} animal${p.spotted === 1 ? '' : 's'}${p.best ? `, best: ${esc(p.best)}` : ''}`;
+    const seen = !p.me && p.updated ? `<small>${ago(Date.parse(p.updated))}</small>` : '';
+    return `<li class="${p.me ? 'me' : ''}"><span class="rank disp num">${i + 1}</span>
+      <span class="label">${esc(p.name)}${p.me ? ' (you)' : ''}<small>${sub}</small></span>
+      <span class="v">${fmt(Number(p.total) || 0)}${seen}</span></li>`;
+  }).join('');
+  el.innerHTML = `
+    <div class="score-hero"><h2 class="disp">Leaderboard</h2>
+      <button class="link-btn lb-refresh" data-act="lb-refresh"${lbBusy ? ' disabled' : ''}>Refresh</button></div>
+    <p class="lb-status">${status}</p>
+    ${S.name ? '' : '<p class="sec-p">Add your name in Settings below so your friends know which score is yours.</p>'}
+    <ol class="board">${rows}</ol>`;
+}
+
 /* ---------- Rendering ---------- */
 let stampId = null, stampSq = null, lastTotal = null;
 
@@ -1075,7 +1163,7 @@ function applyTheme(){
 }
 function renderAll(){
   const T = totals();
-  renderHeader(T); renderSpot(); renderBingo(); renderScore(T);
+  renderHeader(T); renderSpot(); renderBingo(); renderScore(T); renderBoard();
   stampId = null; stampSq = null;
 }
 
@@ -1096,7 +1184,7 @@ function checkMilestones(){
     S.seen.bingo[k] = b.lvl;
   });
 }
-function changed(){ checkMilestones(); save(); renderAll(); }
+function changed(){ checkMilestones(); save(); renderAll(); queueSync(); }
 
 /* ---------- Sheet ---------- */
 let sheetId = null, draft = null, lastFocus = null;
@@ -1153,6 +1241,7 @@ function showTab(name){
   document.querySelectorAll('.panel').forEach(p => { p.hidden = p.id !== 'tab-' + name; });
   document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-current', b.dataset.tab === name ? 'page' : 'false'));
   window.scrollTo(0, 0);
+  if (name === 'score') { renderBoard(); if (Date.now() - B.at > 2 * 60000) queueSync(300); }
 }
 
 document.addEventListener('click', e => {
@@ -1170,6 +1259,7 @@ document.addEventListener('click', e => {
   if (d.group) { group = d.group; renderSpot(); window.scrollTo(0, 0); return; }
   switch (d.act){
     case 'log': return logSighting();
+    case 'lb-refresh': syncBoard(); return;
     case 'photos-now': runPhotos(true); return;
     case 'remove': return removeSighting();
     case 'deal': {
@@ -1181,7 +1271,7 @@ document.addEventListener('click', e => {
     case 'unstick': S.sticks.pop(); changed(); return;
     case 'reset':
       if (!confirm('Reset everything? This clears your animals, bingo cards and score on this phone.')) return;
-      { const keepTheme = S.theme; S = fresh(); S.theme = keepTheme; S.offlineToasted = true; }
+      { const keep = {theme: S.theme, pid: S.pid}; S = fresh(); Object.assign(S, keep); S.offlineToasted = true; }
       $('#name-input').value = ''; save(); applyTheme(); renderAll(); showTab('spot'); toast('Game reset'); return;
     case 'intro-go': {
       const v = $('#intro-name').value.trim();
@@ -1195,7 +1285,7 @@ document.addEventListener('click', e => {
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
 $('#search').addEventListener('input', renderSpot);
 $('#sort').addEventListener('change', e => { S.sort = e.target.value; save(); renderSpot(); window.scrollTo(0, 0); });
-$('#name-input').addEventListener('input', e => { S.name = e.target.value.trim(); save(); renderHeader(totals()); renderScore(totals()); });
+$('#name-input').addEventListener('input', e => { S.name = e.target.value.trim(); save(); renderHeader(totals()); renderScore(totals()); renderBoard(); queueSync(3000); });
 $('#intro-name').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); document.querySelector('[data-act="intro-go"]').click(); } });
 
 /* ---------- Static bits ---------- */
@@ -1229,6 +1319,10 @@ if (S.photos !== 'off' && S.photos !== 'on') S.photos = 'on';
 updatePhotoStatus();
 schedulePhotos();
 window.addEventListener('online', schedulePhotos);
+save();
+queueSync(2000);
+window.addEventListener('online', () => queueSync(2000));
+window.addEventListener('offline', renderBoard);
 })();
 </script>
 </body>
